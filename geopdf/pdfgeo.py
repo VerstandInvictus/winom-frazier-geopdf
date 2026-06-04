@@ -1,5 +1,6 @@
 """Structural read of geospatial PDFs via pikepdf."""
 from __future__ import annotations
+import os
 import re
 import tempfile
 from dataclasses import dataclass, field
@@ -95,12 +96,17 @@ def scan_all_gpts(path) -> list[Bounds]:
     data = Path(path).read_bytes()
     matches = _GPTS_RE.findall(data)
     if not matches:
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp_path = tmp.name
-        with pikepdf.open(str(path)) as pdf:
-            pdf.save(tmp_path, compress_streams=False,
-                     object_stream_mode=pikepdf.ObjectStreamMode.disable)
-        matches = _GPTS_RE.findall(Path(tmp_path).read_bytes())
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                tmp_path = tmp.name
+            with pikepdf.open(str(path)) as pdf:
+                pdf.save(tmp_path, compress_streams=False,
+                         object_stream_mode=pikepdf.ObjectStreamMode.disable)
+            matches = _GPTS_RE.findall(Path(tmp_path).read_bytes())
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
     boxes: list[Bounds] = []
     for raw in matches:
         nums = [float(x) for x in raw.split()]

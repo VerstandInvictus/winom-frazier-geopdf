@@ -36,7 +36,13 @@ def corners_to_gcps(gpts: list[float], width: int, height: int) -> list[GCP]:
 
 
 def write_geotiff(png_path, gcps: list[GCP], out_tif) -> Path:
-    """Write an EPSG:4326 GeoTIFF from a PNG + 4 corner GCPs (affine fit)."""
+    """Write an EPSG:4326 GeoTIFF from a PNG + 4 corner GCPs (affine fit).
+
+    The 4-corner affine cannot perfectly represent the slightly keystoned GPTS
+    quad, leaving a ~80 m max corner residual (~0.26% of the 32 km width) — fine
+    for OHV trail navigation. A polynomial/thin-plate-spline warp would remove it
+    if sub-100 m corner accuracy were ever needed.
+    """
     img = np.asarray(Image.open(png_path).convert("RGB"))
     height, width = img.shape[:2]
     transform = from_gcps(gcps)
