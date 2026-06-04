@@ -44,6 +44,7 @@ def write_geotiff(png_path, gcps: list[GCP], out_tif) -> Path:
     with rasterio.open(
         out_tif, "w", driver="GTiff", height=height, width=width,
         count=3, dtype="uint8", crs=CRS.from_epsg(4326), transform=transform,
+        compress="lzw",  # lossless; line-art maps shrink ~5-10x, and geotiff.js decodes LZW
     ) as dst:
         for b in range(3):
             dst.write(img[:, :, b], b + 1)
