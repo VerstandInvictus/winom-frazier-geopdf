@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Winom-Frazier — Georeferencing Picker (page 2)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="./georef.css" />
+</head>
+<body>
+  <div id="panel">
+    <h1>Georeference page 2</h1>
+    <ol id="help">
+      <li>Click a row to <b>arm</b> it (highlighted).</li>
+      <li>Zoom into that trailhead on the map and click it. Drag the pin to fine-tune.</li>
+      <li>Place ≥3. Watch <b>RMS</b> and per-point residual (metres).</li>
+      <li>The bottom-right preview shows your fitted points vs. the true coords + the map footprint.</li>
+      <li><b>Export transform.json</b> and hand it back.</li>
+    </ol>
+    <table id="cptable">
+      <thead><tr><th>#</th><th>Name</th><th>Lat</th><th>Lon</th><th>Pixel</th><th>m</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div id="btns">
+      <button id="addbtn">+ Add point</button>
+      <button id="exportbtn">Export transform.json</button>
+    </div>
+    <p id="rms">RMS: —</p>
+    <label><input type="checkbox" id="showprev" checked /> basemap preview</label>
+  </div>
+  <div id="imgmap"></div>
+  <div id="prevmap"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./georef.js"></script>
+</body>
+</html>
