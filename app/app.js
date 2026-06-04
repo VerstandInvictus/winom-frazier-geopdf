@@ -74,3 +74,35 @@ if ("geolocation" in navigator) {
 }
 
 recenterBtn.addEventListener("click", () => { if (lastFix) map.setView(lastFix, Math.max(map.getZoom(), 14)); });
+
+// ---- GPX track loader ----
+let gpxLayer = null;
+function parseGpxLatLngs(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+  if (doc.querySelector("parsererror")) throw new Error("invalid GPX/XML");
+  let pts = [...doc.querySelectorAll("trkpt")];
+  if (!pts.length) pts = [...doc.querySelectorAll("rtept")];
+  if (!pts.length) pts = [...doc.querySelectorAll("wpt")];
+  return pts.map((p) => [parseFloat(p.getAttribute("lat")), parseFloat(p.getAttribute("lon"))])
+    .filter(([la, lo]) => !Number.isNaN(la) && !Number.isNaN(lo));
+}
+document.getElementById("gpx").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const ll = parseGpxLatLngs(reader.result);
+      if (!ll.length) { status.textContent = "GPX has no coordinates."; return; }
+      if (gpxLayer) gpxLayer.remove();
+      gpxLayer = L.layerGroup([
+        L.polyline(ll, { color: "#e11", weight: 3, opacity: 0.9 }),
+        L.circleMarker(ll[0], { radius: 5, color: "#080", fillOpacity: 1 }),
+        L.circleMarker(ll[ll.length - 1], { radius: 5, color: "#a00", fillOpacity: 1 }),
+      ]).addTo(map);
+      map.fitBounds(L.polyline(ll).getBounds(), { padding: [20, 20] });
+      status.textContent = `GPX: ${ll.length} points.`;
+    } catch (err) { status.textContent = "GPX error: " + err.message; }
+  };
+  reader.readAsText(file);
+});
