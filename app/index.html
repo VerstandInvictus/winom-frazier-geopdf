@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e6b2e" />
+  <title>Winom-Frazier OHV Field Map</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+    #map { position: absolute; inset: 0; background: #e9e9e9; z-index: 0; }
+    #panel { position: absolute; top: 8px; left: 8px; z-index: 1000; background: rgba(255,255,255,0.94);
+      padding: 8px 10px; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.3); max-width: 70vw; font-size: 14px; }
+    #panel .row { margin: 4px 0; }
+    #install-hint { position: absolute; bottom: 12px; left: 8px; right: 8px; z-index: 1001;
+      background: #2e6b2e; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
+    #install-hint button { margin-left: 8px; }
+    button { font-size: 14px; padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <div class="row"><strong>Winom-Frazier OHV</strong></div>
+    <div class="row" id="status">Loading…</div>
+  </div>
+  <div id="install-hint" hidden>
+    For offline GPS, add this to your Home Screen (Share → Add to Home Screen), then open it from there.
+    <button type="button">Got it</button>
+  </div>
+  <div id="map"></div>
+  <script src="app.js"></script>
+</body>
+</html>
