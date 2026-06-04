@@ -56,3 +56,45 @@ document.getElementById("track").addEventListener("change", (e) => {
     watchId = null;
   }
 });
+
+// ---- GPX track overlay (compare a recorded ride against the map) ----
+let gpxLayer = null;
+
+function parseGpxLatLngs(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+  if (doc.querySelector("parsererror")) throw new Error("invalid GPX/XML");
+  // prefer track points, then route points, then bare waypoints
+  let pts = [...doc.querySelectorAll("trkpt")];
+  if (!pts.length) pts = [...doc.querySelectorAll("rtept")];
+  if (!pts.length) pts = [...doc.querySelectorAll("wpt")];
+  return pts
+    .map((p) => [parseFloat(p.getAttribute("lat")), parseFloat(p.getAttribute("lon"))])
+    .filter(([la, lo]) => !Number.isNaN(la) && !Number.isNaN(lo));
+}
+
+document.getElementById("gpx").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const latlngs = parseGpxLatLngs(reader.result);
+      if (!latlngs.length) {
+        status.textContent =
+          "GPX has no <trkpt>/<rtept>/<wpt> coordinates — the route wasn't included.";
+        return;
+      }
+      if (gpxLayer) gpxLayer.remove();
+      gpxLayer = L.layerGroup([
+        L.polyline(latlngs, { color: "#e11", weight: 3, opacity: 0.9 }),
+        L.circleMarker(latlngs[0], { radius: 5, color: "#080", fillOpacity: 1 }).bindPopup("Track start"),
+        L.circleMarker(latlngs[latlngs.length - 1], { radius: 5, color: "#a00", fillOpacity: 1 }).bindPopup("Track end"),
+      ]).addTo(map);
+      map.fitBounds(L.polyline(latlngs).getBounds(), { padding: [20, 20] });
+      status.textContent = `GPX loaded: ${latlngs.length} track points (red). Compare against the map overlay.`;
+    } catch (err) {
+      status.textContent = "GPX error: " + err.message;
+    }
+  };
+  reader.readAsText(file);
+});
