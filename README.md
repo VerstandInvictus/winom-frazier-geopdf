@@ -34,3 +34,18 @@ location, or check "Track live GPS". Adjust overlay opacity to compare against t
 **Manual verification:** the trail map should land on the Winom-Frazier area of the
 Umatilla NF (≈45.05 N, −118.56 W). Enter a known trailhead/campground coordinate and
 confirm the pin sits on that feature in the overlaid map.
+
+## Field viewer (offline PWA)
+
+A self-contained installable web app in `app/` (deployed via GitHub Pages). Open
+**https://verstandinvictus.github.io/winom-frazier-geopdf/** on your phone, then:
+
+1. **Add to Home Screen** (Share → Add to Home Screen) — required for offline use and GPS on iOS.
+2. Launch it from the Home Screen icon and **allow Location**.
+3. It caches both maps on first load; after that it works fully offline with live GPS.
+
+Toggle the 2016 / 2025 maps, load a `.gpx` route, and tap "Recenter on me." The 2016
+raster (re-encoded WebP) renders via a rotated image overlay; the 2025 vector via an
+SVG overlay; a hand-rolled cache-first service worker + `navigator.storage.persist()`
+keep it durably offline. Deploy is automated by `.github/workflows/pages.yml`
+(Pages source = GitHub Actions, serving `app/`).
