@@ -1,0 +1,24 @@
+html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+#panel {
+  position: absolute; top: 0; left: 0; width: 330px; height: 100%;
+  overflow: auto; background: #f7f7f7; border-right: 1px solid #ccc;
+  padding: 10px; box-sizing: border-box; z-index: 1000;
+}
+#panel h1 { font-size: 16px; margin: 0 0 8px; }
+#help { font-size: 12px; padding-left: 18px; color: #333; margin: 4px 0; }
+#imgmap { position: absolute; top: 0; left: 330px; right: 0; bottom: 0; background: #ddd; }
+#prevmap {
+  position: absolute; right: 10px; bottom: 10px; width: 380px; height: 300px;
+  border: 2px solid #444; z-index: 1000; background: #fff;
+}
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 6px 0; }
+th, td { border: 1px solid #ccc; padding: 2px 4px; text-align: left; }
+tr.armed { background: #fde68a; }
+#cptable tbody tr { cursor: pointer; }
+input { font-size: 12px; }
+#rms { font-weight: bold; font-size: 13px; }
+#btns button { margin: 2px 4px 2px 0; font-size: 12px; }
+.cp-pin div {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #e11; border: 2px solid #fff; box-shadow: 0 0 3px #000;
+}

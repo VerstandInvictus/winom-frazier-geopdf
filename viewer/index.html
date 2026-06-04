@@ -17,12 +17,13 @@
     </form>
     <label><input id="track" type="checkbox" /> Track live GPS</label>
     <label>Overlay opacity <input id="opacity" type="range" min="0" max="1" step="0.05" value="0.85" /></label>
-    <p id="status">Loading GeoTIFF…</p>
+    <label>GPS track (GPX) <input id="gpx" type="file" accept=".gpx,application/gpx+xml" /></label>
+    <label><input id="svg2025" type="checkbox" /> 2025 vector map (SVG)</label>
+    <p id="status">Loading map…</p>
   </div>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/georaster@1.5.6/dist/georaster.browser.bundle.min.js"></script>
-  <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
+  <script src="https://unpkg.com/leaflet-imageoverlay-rotated@0.2.1/Leaflet.ImageOverlay.Rotated.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
