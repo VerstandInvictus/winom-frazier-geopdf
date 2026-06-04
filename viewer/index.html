@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Winom-Frazier OHV — GeoTIFF Viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="panel">
+    <h1>Winom-Frazier OHV</h1>
+    <form id="gps-form">
+      <label>Lat <input id="lat" type="number" step="any" placeholder="45.05" /></label>
+      <label>Lon <input id="lon" type="number" step="any" placeholder="-118.56" /></label>
+      <button type="submit">Drop GPS pin</button>
+    </form>
+    <label><input id="track" type="checkbox" /> Track live GPS</label>
+    <label>Overlay opacity <input id="opacity" type="range" min="0" max="1" step="0.05" value="0.85" /></label>
+    <p id="status">Loading GeoTIFF…</p>
+  </div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/georaster@1.5.6/dist/georaster.browser.bundle.min.js"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

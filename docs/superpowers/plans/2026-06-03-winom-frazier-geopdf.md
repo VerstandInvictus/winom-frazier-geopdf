@@ -15,6 +15,18 @@
 - `2025_WinomFrazierDesolationGuide.pdf`: no GPTS in plaintext — decode must decompress object streams to confirm whether it is georeferenced at all.
 - Area is in **NE Oregon (Umatilla NF)**, not California — validate against user-supplied coordinates.
 
+## REVISED APPROACH (after Task 1 decode revealed the true structure)
+
+Decode of the real files overturned the original "wrong coordinates" theory. The actual situation:
+- Both OHV PDFs have **7 named viewports** with **identical** georeferencing. `Winom-Frazier OHV.pdf` is the **2016 Adobe InDesign original**; `_260503` is a 2026 **PDFium re-save** (same georef, possibly degraded raster). The 2016 original is authoritative.
+- The 7 viewports: `Where Are We` (regional locator), `State` (continental locator), `Map Frame` (page frame → multi-state), `Winom-FrazierData` (**the correct ~1132 km² / 37×31 km trail map**), and 3 tiny campground/trailhead detail insets (~0.2 km² each).
+- **The georeferencing is correct.** The "snapped to a tiny box" symptom is a **multi-viewport precedence** problem: naive readers pick the wrong viewport (a campground inset) instead of `Winom-FrazierData`.
+- `2025_WinomFrazierDesolationGuide.pdf` is a **separate 2-page guide, NOT georeferenced** (0 viewports); content ~2019.
+
+**User decisions:** (1) Fix = **collapse to a single viewport** — keep only `Winom-FrazierData` from the 2016 original so every reader lands on the trail map. (2) **Render the 2025 guide** for visual comparison; georeference-from-scratch only if the user later judges it better.
+
+This supersedes the original Task 4 ("rewrite GPTS"): coordinates are already correct, so the fix removes the confusing extra viewports instead. Task 3 reorients to *identify + validate* the main-map viewport and document the multi-viewport diagnosis. Task 5 additionally renders the 2025 guide pages. User's known coordinates become an independent confirmation (not required for the fix).
+
 ---
 
 ### Task 0: Project scaffold + dependency install
@@ -725,7 +737,9 @@ git commit -m "feat: diagnose viewports vs known points and decide fix path"
 
 ---
 
-### Task 4: Path A — surgical GPTS correction (`fix_surgical` + CLI)
+### Task 4: Collapse to single viewport (`fix_surgical` + CLI)
+
+> **SUPERSEDES the original "surgical GPTS rewrite".** Decode proved the coordinates are already correct; the bug is multi-viewport precedence. The fix collapses the page `/VP` array to keep ONLY the `Winom-FrazierData` main-map viewport (from the 2016 Adobe original `Winom-Frazier OHV.pdf`), so every reader lands on the trail map. Function: `collapse_to_single_viewport(in_path, out_path, keep_name)`. The original-GPTS-rewrite text below is retained for history but not implemented.
 
 **Goal:** Rewrite the wrong active viewport's `/GPTS` (and/or repoint `/Measure`) to the correct trail-extent bounds, write `*_corrected.pdf`, and prove the fix by re-decoding.
 
