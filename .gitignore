@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Geo / build outputs (regenerable)
+*.tif.aux.xml
+tiles/
+output/
+*.tmp
+
+# Editor
+.idea/
+.vscode/
