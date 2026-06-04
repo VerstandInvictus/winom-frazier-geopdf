@@ -4,34 +4,34 @@
     {
       "id": 20,
       "subject": "Task 1: PWA shell (manifest + cache-first SW + persist/install)",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Installable, offline-capable PWA shell that precaches its core files and persists storage.\n\n**Files:** app/index.html, app/app.js, app/sw.js, app/manifest.webmanifest, app/icons/icon-{192,512}.png\n\n**Verify:** serve `python -m http.server 8001 -d app`; SW activates; DevTools Offline reload loads shell; Lighthouse Installable passes.\n\n```json:metadata\n{\"files\": [\"app/index.html\",\"app/app.js\",\"app/sw.js\",\"app/manifest.webmanifest\",\"app/icons/icon-192.png\",\"app/icons/icon-512.png\"], \"verifyCommand\": \"python -m http.server 8001 -d app (manual: SW activates, offline reload, Lighthouse Installable)\", \"acceptanceCriteria\": [\"shell loads w/ controls + empty #map, no console errors\",\"cache-first SW precaches core list\",\"first run persist() + install hint\",\"offline reload loads shell\",\"Lighthouse Installable passes\"]}\n```"
     },
     {
       "id": 21,
       "subject": "Task 2: Map core — both maps + toggle (vendored Leaflet)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [20],
       "description": "**Goal:** Render 2016 raster (rotated WebP overlay) + 2025 vector (SVG overlay) with a toggle, all libs/assets vendored offline.\n\n**Files:** app/vendor/{leaflet.js,leaflet.css,Leaflet.ImageOverlay.Rotated.js}, app/map2016.webp, app/overlay2016.json, app/page2.svg, app/page2_overlay.json, app/index.html, app/app.js, app/sw.js, tools/check_app_assets.py\n\n**Verify:** `python tools/check_app_assets.py` OK; serve, DevTools Offline reload → both maps render + toggle works.\n\n```json:metadata\n{\"files\": [\"app/vendor/\",\"app/map2016.webp\",\"app/overlay2016.json\",\"app/page2.svg\",\"app/page2_overlay.json\",\"app/index.html\",\"app/app.js\",\"app/sw.js\",\"tools/check_app_assets.py\"], \"verifyCommand\": \"python tools/check_app_assets.py ; serve + DevTools Offline reload\", \"acceptanceCriteria\": [\"2016 webp rotated overlay crisp\",\"2025 svg overlay\",\"2016/2025 toggle + fitBounds\",\"loads offline (vendored+precached)\",\"check_app_assets passes\"]}\n```"
     },
     {
       "id": 22,
       "subject": "Task 3: GPS module — live dot + accuracy ring + recenter",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [21],
       "description": "**Goal:** Track live position with a blue dot + accuracy ring and a recenter button.\n\n**Files:** app/index.html (recenter button), app/app.js (watchPosition + recenter)\n\n**Verify:** DevTools Sensors set location → dot + ring appear, recenter enables/centers; real-phone confirms tracking.\n\n```json:metadata\n{\"files\": [\"app/index.html\",\"app/app.js\"], \"verifyCommand\": \"DevTools Sensors location; real-phone tracking\", \"acceptanceCriteria\": [\"watchPosition blue dot + accuracy circle update\",\"recenter centers on last fix (disabled until first)\",\"denied/unavailable -> non-blocking msg, map usable\"]}\n```"
     },
     {
       "id": 23,
       "subject": "Task 4: GPX route loader",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [21],
       "description": "**Goal:** Load a .gpx from device storage and draw it as a route polyline.\n\n**Files:** app/index.html (file input), app/app.js (parseGpxLatLngs ported from viewer/app.js)\n\n**Verify:** load drive-in GPX → red polyline + start/end markers, fits bounds; empty GPX → message.\n\n```json:metadata\n{\"files\": [\"app/index.html\",\"app/app.js\"], \"verifyCommand\": \"load GPX in browser\", \"acceptanceCriteria\": [\"GPX -> red polyline + start/end markers + fit bounds\",\"empty GPX -> no-coordinates message\",\"works offline (client-side parse)\"]}\n```"
     },
     {
       "id": 24,
       "subject": "Task 5: Mini-legend (reimplemented, collapsible)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [21],
       "description": "**Goal:** Compact flowable HTML/CSS legend in the controls pane, collapsible, faithful to the sheets (symbology in output/_leg_*.png).\n\n**Files:** app/index.html (legend markup + CSS), app/app.js (collapse toggle)\n\n**Verify:** narrow to phone width; expand/collapse; swatches match output/_leg_zoom.png + _leg_left.png.\n\n```json:metadata\n{\"files\": [\"app/index.html\",\"app/app.js\"], \"verifyCommand\": \"narrow viewport; compare to output/_leg_*.png\", \"acceptanceCriteria\": [\"difficulty (green/blue/black) + roads + special-trail bands + key symbols\",\"collapses/expands + reflows on <=400px\"]}\n```"
     },
