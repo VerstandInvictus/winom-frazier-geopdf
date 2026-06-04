@@ -18,6 +18,16 @@
       background: #2e6b2e; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
     #install-hint button { margin-left: 8px; }
     button { font-size: 14px; padding: 4px 8px; }
+    #legend { margin-top: 6px; }
+    #legend h4 { margin: 6px 0 2px; font-size: 12px; }
+    #legend .item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
+    #legend .sw { width: 28px; height: 0; border-top: 3px solid #000; flex: 0 0 28px; }
+    #legend .sw.dot { border-top: 3px dotted; }
+    #legend .sw.dash { border-top: 3px dashed; }
+    #legend .band { height: 10px; border-top: none; border-radius: 2px; }
+    #legend .icon { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 3px; color: #fff;
+      font-size: 10px; line-height: 16px; text-align: center; }
+    #legend.collapsed .body { display: none; }
   </style>
 </head>
 <body>
@@ -30,6 +40,29 @@
     </div>
     <div class="row"><button id="recenter" type="button" disabled>Recenter on me</button></div>
     <div class="row">GPX <input id="gpx" type="file" accept=".gpx,application/gpx+xml" /></div>
+    <div id="legend">
+      <button id="legtoggle" type="button">Legend ▾</button>
+      <div class="body">
+        <h4>Motorized trails</h4>
+        <div class="item"><span class="sw dot" style="border-color:#2e8b2e"></span>Easy</div>
+        <div class="item"><span class="sw dot" style="border-color:#1565c0"></span>Moderate</div>
+        <div class="item"><span class="sw dot" style="border-color:#000"></span>Most difficult</div>
+        <div class="item"><span class="sw band" style="background:#9c5bbf"></span>Seasonally closed</div>
+        <div class="item"><span class="sw band" style="background:#f5a623"></span>Class-1 ATV prohibited</div>
+        <h4>Roads</h4>
+        <div class="item"><span class="sw" style="border-color:#000"></span>Paved</div>
+        <div class="item"><span class="sw" style="border-color:#888"></span>Gravel</div>
+        <div class="item"><span class="sw dash" style="border-color:#888"></span>Dirt</div>
+        <h4>Symbols</h4>
+        <div class="item"><span class="icon" style="background:#6b4f2a">TH</span>Trailhead</div>
+        <div class="item"><span class="icon" style="background:#6b4f2a">▲</span>Campground</div>
+        <div class="item"><span class="icon" style="background:#d32f2f">▲</span>Camp site</div>
+        <div class="item"><span class="icon" style="background:#d32f2f">WC</span>Restroom</div>
+        <div class="item"><span class="sw" style="border-color:#7fb3d5"></span>Stream</div>
+        <div class="item"><span class="icon" style="background:#bcd6ea;color:#333">≈</span>Wilderness</div>
+        <div class="item"><span style="color:#a00;flex:0 0 28px;text-align:center">★</span>Mileage point</div>
+      </div>
+    </div>
   </div>
   <div id="install-hint" hidden>
     For offline GPS, add this to your Home Screen (Share → Add to Home Screen), then open it from there.

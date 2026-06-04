@@ -106,3 +106,13 @@ document.getElementById("gpx").addEventListener("change", (e) => {
   };
   reader.readAsText(file);
 });
+
+// ---- Mini-legend collapse toggle ----
+(function legend() {
+  const box = document.getElementById("legend");
+  const btn = document.getElementById("legtoggle");
+  btn.addEventListener("click", () => {
+    box.classList.toggle("collapsed");
+    btn.textContent = box.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+  });
+})();
