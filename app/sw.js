@@ -1,10 +1,10 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v5";
+const CACHE_VERSION = "wf-v6";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
   "./vendor/leaflet.js", "./vendor/leaflet.css", "./vendor/Leaflet.ImageOverlay.Rotated.js",
-  "./vendor/protomaps-leaflet.js", "./pnw.pmtiles",
+  "./vendor/protomaps-leaflet.js", "./pnw.pmtiles", "./pnw_z12.pmtiles",
   "./map2016.webp", "./overlay2016.json", "./page2.svg", "./page2_overlay.json",
 ];
 
@@ -18,14 +18,14 @@ self.addEventListener("activate", (e) => {
   );
 });
 // Serve byte-range requests for the .pmtiles archive from the cached full file (offline).
-let _pmBuf = null;
+const _pmBufs = {};
 async function pmtilesBuffer(href) {
-  if (_pmBuf) return _pmBuf;
+  if (_pmBufs[href]) return _pmBufs[href];
   const cache = await caches.open(CACHE_VERSION);
   let res = await cache.match(href);
   if (!res) { res = await fetch(href); try { await cache.put(href, res.clone()); } catch (e) {} }
-  _pmBuf = await res.arrayBuffer();
-  return _pmBuf;
+  _pmBufs[href] = await res.arrayBuffer();
+  return _pmBufs[href];
 }
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;

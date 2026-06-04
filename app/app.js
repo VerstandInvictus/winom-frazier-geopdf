@@ -32,6 +32,8 @@ const status = document.getElementById("status");
 // ---- Regional vector basemap backdrop (offline PMTiles, muted full basemap) ----
 try {
   protomapsL.leafletLayer({ url: "pnw.pmtiles", flavor: "grayscale", lang: "en", pane: "backdrop" }).addTo(map);
+  // Extra z12 detail over Umatilla/Union/Baker/Grant counties (small add-on, renders at z>=12).
+  protomapsL.leafletLayer({ url: "pnw_z12.pmtiles", flavor: "grayscale", lang: "en", pane: "backdrop" }).addTo(map);
 } catch (e) { console.warn("backdrop layer failed:", e); }
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
