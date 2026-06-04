@@ -35,11 +35,28 @@ def cmd_report(_args):
     print(f"\nWrote {OUTPUT / 'bounds_report.json'} and {OUTPUT / 'bounds_report.md'}")
 
 
+def cmd_diagnose(_args):
+    from geopdf.diagnose import diagnose, load_known_points, write_findings
+    points = load_known_points(PROJECT_ROOT / "config" / "known_points.json")
+    if not points:
+        print("NOTE: config/known_points.json not found/empty — structural diagnosis only "
+              "(coordinates are an optional independent confirmation).")
+    result = diagnose(DEFAULT_PDFS, points)
+    findings = PROJECT_ROOT / "docs" / "superpowers" / "specs" / "2026-06-03-winom-frazier-FINDINGS.md"
+    findings.parent.mkdir(parents=True, exist_ok=True)
+    write_findings(result, findings)
+    print(f"Decision: {result['decision']}")
+    for f in result["files"]:
+        print(f"  {f['filename']}: georef={f['georeferenced']} main={f['main_map_name']}")
+    print(f"Wrote {findings}")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="cli")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("decode").set_defaults(func=cmd_decode)
     sub.add_parser("report").set_defaults(func=cmd_report)
+    sub.add_parser("diagnose").set_defaults(func=cmd_diagnose)
     args = parser.parse_args()
     args.func(args)
 
