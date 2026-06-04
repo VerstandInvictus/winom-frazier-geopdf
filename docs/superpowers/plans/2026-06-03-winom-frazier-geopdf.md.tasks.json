@@ -1,0 +1,54 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-03-winom-frazier-geopdf.md",
+  "tasks": [
+    {
+      "id": 7,
+      "subject": "Task 0: Project scaffold + dependency install",
+      "status": "pending",
+      "description": "**Goal:** Runnable Python package skeleton with all geo deps importable.\n\n**Files:** requirements.txt, geopdf/__init__.py, tests/__init__.py, tests/conftest.py, config/known_points.example.json, README.md\n\n**Verify:** python -c \"import pikepdf, fitz, pyproj, rasterio; from rasterio.control import GroundControlPoint; print('ok')\" -> ok\n\n```json:metadata\n{\"files\": [\"requirements.txt\", \"geopdf/__init__.py\", \"tests/__init__.py\", \"tests/conftest.py\", \"config/known_points.example.json\", \"README.md\"], \"verifyCommand\": \"python -c \\\"import pikepdf, fitz, pyproj, rasterio; from rasterio.control import GroundControlPoint; print('ok')\\\"\", \"acceptanceCriteria\": [\"pip install -r requirements.txt succeeds\", \"imports succeed\", \"conftest exposes 3 PDF paths fixture\", \"known_points.example.json documents format\"]}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 1: Decode one PDF's georeferencing (pdfgeo + crs)",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Extract active viewport bounds + forensic GPTS scan with area/span/CRS.\n\n**Files:** geopdf/crs.py, geopdf/pdfgeo.py, tests/test_pdfgeo.py\n\n**Verify:** python -m pytest tests/test_pdfgeo.py -v\n\n```json:metadata\n{\"files\": [\"geopdf/crs.py\", \"geopdf/pdfgeo.py\", \"tests/test_pdfgeo.py\"], \"verifyCommand\": \"python -m pytest tests/test_pdfgeo.py -v\", \"acceptanceCriteria\": [\"decode_pdf returns viewport bounds+center+area+span+crs\", \"scan_all_gpts finds embedded boxes incl compressed\", \"ohv_single active viewport area < 1 km2\", \"ohv_dual scan finds >=7 boxes incl lat-span > 0.3\"]}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 2: Multi-file comparison report (report + CLI)",
+      "status": "pending",
+      "blockedBy": [8],
+      "description": "**Goal:** Decode all 3 PDFs into one comparison table (JSON + Markdown).\n\n**Files:** geopdf/report.py, cli.py, tests/test_report.py\n\n**Verify:** python -m pytest tests/test_report.py -v; then python -m cli report\n\n```json:metadata\n{\"files\": [\"geopdf/report.py\", \"cli.py\", \"tests/test_report.py\"], \"verifyCommand\": \"python -m pytest tests/test_report.py -v\", \"acceptanceCriteria\": [\"build_report returns per-file viewport records\", \"render_markdown returns table string\", \"cli report writes output/bounds_report.json\", \"area<1 flagged SUSPECT (inset-scale)\"]}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 3: Diagnose vs known coords + decide fix path (diagnose + CLI)",
+      "status": "pending",
+      "blockedBy": [9],
+      "description": "**Goal:** Validate viewports vs known points, classify, choose Path A/B, write FINDINGS.md.\n\n**Files:** geopdf/diagnose.py, cli.py, tests/test_diagnose.py\n\n**Verify:** python -m pytest tests/test_diagnose.py -v\n\n```json:metadata\n{\"files\": [\"geopdf/diagnose.py\", \"cli.py\", \"tests/test_diagnose.py\"], \"verifyCommand\": \"python -m pytest tests/test_diagnose.py -v\", \"acceptanceCriteria\": [\"point_in_bounds correct\", \"classify_viewport returns main_map/inset/region/continental/off_region\", \"diagnose returns path_decision\", \"write_findings writes markdown with numbers\", \"logic tested with synthetic coords\"]}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 4: Path A — surgical GPTS correction (fix_surgical + CLI)",
+      "status": "pending",
+      "blockedBy": [10],
+      "description": "**Goal:** Rewrite the wrong active viewport's /GPTS to the correct extent, write *_corrected.pdf, prove via re-decode.\n\n**Files:** geopdf/fix_surgical.py, cli.py, tests/test_fix_surgical.py\n\n**Verify:** python -m pytest tests/test_fix_surgical.py -v\n\n```json:metadata\n{\"files\": [\"geopdf/fix_surgical.py\", \"cli.py\", \"tests/test_fix_surgical.py\"], \"verifyCommand\": \"python -m pytest tests/test_fix_surgical.py -v\", \"acceptanceCriteria\": [\"set_viewport_gpts writes new PDF with given GPTS\", \"corrected ohv_single active area 500-5000 km2\", \"original file untouched\"]}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 5: Render + georeference to GeoTIFF (render + raster)",
+      "status": "pending",
+      "blockedBy": [11],
+      "description": "**Goal:** Rasterize corrected map to PNG and write EPSG:4326 GeoTIFF via shared GCP helper (also serves Path B).\n\n**Files:** geopdf/render.py, geopdf/raster.py, cli.py, tests/test_raster.py\n\n**Verify:** python -m pytest tests/test_raster.py -v\n\n```json:metadata\n{\"files\": [\"geopdf/render.py\", \"geopdf/raster.py\", \"cli.py\", \"tests/test_raster.py\"], \"verifyCommand\": \"python -m pytest tests/test_raster.py -v\", \"acceptanceCriteria\": [\"render_page_png writes PNG returns dims\", \"corners_to_gcps maps GPTS corners to pixels (first=top-left)\", \"write_geotiff produces EPSG:4326 GeoTIFF bounds within 0.02 deg\", \"cli export writes viewer/winom-frazier_corrected.tif\"]}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 6: Local no-login Leaflet GeoTIFF viewer",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Static browser page overlaying the corrected GeoTIFF on OSM with simulated + live GPS markers.\n\n**Files:** viewer/index.html, viewer/app.js, viewer/style.css, README.md\n\n**Verify:** Manual — python -m cli export then python -m http.server 8000; open http://localhost:8000/viewer/ and verify overlay lands on NE Oregon + pin placement.\n\n```json:metadata\n{\"files\": [\"viewer/index.html\", \"viewer/app.js\", \"viewer/style.css\", \"README.md\"], \"verifyCommand\": \"python -m cli export then python -m http.server 8000 (open http://localhost:8000/viewer/)\", \"acceptanceCriteria\": [\"index.html loads Leaflet+georaster libs from CDN\", \"app.js overlays GeoTIFF and fits bounds\", \"lat/lon form drops/moves marker\", \"live GPS toggle via watchPosition\", \"README documents http.server + viewer URL\"]}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-03"
+}
