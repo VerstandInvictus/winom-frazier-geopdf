@@ -15,6 +15,8 @@ then view the result in a local browser map.
     python -m cli fix            # collapse to the single Winom-FrazierData viewport -> output/*_corrected.pdf
     python -m cli export         # render corrected main map -> viewer/winom-frazier_corrected.tif
     python -m cli render-guide   # rasterize the 2025 guide pages -> output/guide_page{1,2}.png
+    python -m cli verify         # plot config/known_points.json on the GeoTIFF -> output/verify_*.png
+    #   (verify --tif <other.tif> checks any GeoTIFF, e.g. a future from-scratch georeference)
     python -m http.server 8000   # then open http://localhost:8000/viewer/
 
 `diagnose` reads optional known coordinates from `config/known_points.json`

@@ -94,6 +94,31 @@ def cmd_render_guide(_args):
         print(f"Wrote {png} ({w}x{h}px)")
 
 
+def cmd_verify(args):
+    from geopdf.verify import verify_points
+    from geopdf.diagnose import load_known_points
+    tif = Path(args.tif) if args.tif else (VIEWER / "winom-frazier_corrected.tif")
+    points = load_known_points(PROJECT_ROOT / "config" / "known_points.json")
+    if not points:
+        print("No config/known_points.json — copy config/known_points.example.json "
+              "and add real coordinates.")
+        return
+    if not tif.exists():
+        print(f"GeoTIFF not found: {tif}  (run `python -m cli export` first)")
+        return
+    OUTPUT.mkdir(exist_ok=True)
+    summary = verify_points(tif, points, OUTPUT)
+    print(f"{tif.name}: {summary['size'][0]}x{summary['size'][1]}px, "
+          f"~{summary['m_per_px']:.1f} m/px; crops are {summary['crop_m']:.0f} m wide")
+    for r in summary["results"]:
+        flag = "in-bounds" if r["in_bounds"] else "OUT OF BOUNDS"
+        print(f"  {r['name']:18} ({r['lat']:.5f},{r['lon']:.5f}) -> px {tuple(r['pixel'])}  {flag}")
+    print(f"Annotated map: {OUTPUT / 'verify_overview.png'} ; per-point crops: "
+          f"{OUTPUT / 'verify_<name>.png'}")
+    print("Red crosshair = the real coordinate. Its distance to where the map draws "
+          "the feature is the registration error.")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -103,6 +128,10 @@ def main():
     sub.add_parser("fix").set_defaults(func=cmd_fix)
     sub.add_parser("export").set_defaults(func=cmd_export)
     sub.add_parser("render-guide").set_defaults(func=cmd_render_guide)
+    vp = sub.add_parser("verify")
+    vp.add_argument("--tif", default=None,
+                    help="GeoTIFF to check (default: viewer/winom-frazier_corrected.tif)")
+    vp.set_defaults(func=cmd_verify)
     args = parser.parse_args()
     args.func(args)
 

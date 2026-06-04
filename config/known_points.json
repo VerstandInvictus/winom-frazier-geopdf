@@ -1,0 +1,8 @@
+{
+  "_comment": "Ground-truth features for accuracy checks (lat/lon WGS84, decimal degrees). Sources: USFS Umatilla NF recreation pages.",
+  "points": [
+    {"name": "Winom Creek CG", "lat": 45.012, "lon": -118.643},
+    {"name": "Frazier CG", "lat": 45.158656, "lon": -118.643456},
+    {"name": "Oriental CG", "lat": 44.9736596, "lon": -118.728521}
+  ]
+}
