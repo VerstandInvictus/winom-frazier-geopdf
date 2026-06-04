@@ -16,7 +16,7 @@ fetch("./winom-frazier_corrected.tif")
   })
   .then((buf) => parseGeoraster(buf))
   .then((georaster) => {
-    overlay = new GeoRasterLayer({ georaster, opacity: 0.85, resolution: 256 });
+    overlay = new GeoRasterLayer({ georaster, opacity: 0.85, resolution: 1024 });
     overlay.addTo(map);
     map.fitBounds(overlay.getBounds());
     status.textContent = "GeoTIFF loaded.";
