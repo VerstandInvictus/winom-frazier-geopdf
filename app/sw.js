@@ -1,9 +1,10 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v3";
+const CACHE_VERSION = "wf-v4";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
   "./vendor/leaflet.js", "./vendor/leaflet.css", "./vendor/Leaflet.ImageOverlay.Rotated.js",
+  "./vendor/protomaps-leaflet.js", "./pnw.pmtiles",
   "./map2016.webp", "./overlay2016.json", "./page2.svg", "./page2_overlay.json",
 ];
 
@@ -16,8 +17,39 @@ self.addEventListener("activate", (e) => {
       .then(() => self.clients.claim())
   );
 });
+// Serve byte-range requests for the .pmtiles archive from the cached full file (offline).
+let _pmBuf = null;
+async function pmtilesBuffer(href) {
+  if (_pmBuf) return _pmBuf;
+  const cache = await caches.open(CACHE_VERSION);
+  let res = await cache.match(href);
+  if (!res) { res = await fetch(href); try { await cache.put(href, res.clone()); } catch (e) {} }
+  _pmBuf = await res.arrayBuffer();
+  return _pmBuf;
+}
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  const url = new URL(e.request.url);
+  const range = e.request.headers.get("range");
+  if (url.pathname.endsWith(".pmtiles") && range) {
+    e.respondWith((async () => {
+      const buf = await pmtilesBuffer(url.href);
+      const m = /bytes=(\d+)-(\d*)/.exec(range);
+      const start = +m[1];
+      const end = m[2] ? +m[2] : buf.byteLength - 1;
+      const slice = buf.slice(start, end + 1);
+      return new Response(slice, {
+        status: 206,
+        headers: {
+          "Content-Range": `bytes ${start}-${end}/${buf.byteLength}`,
+          "Content-Length": String(slice.byteLength),
+          "Accept-Ranges": "bytes",
+          "Content-Type": "application/octet-stream",
+        },
+      });
+    })());
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then((hit) => hit || fetch(e.request).then((resp) => {
       const copy = resp.clone();

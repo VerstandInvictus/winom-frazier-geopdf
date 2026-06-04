@@ -24,7 +24,15 @@ const map = L.map("map", { zoomControl: true });
 // and GPS dot (in overlayPane) always render on top and never get hidden by a map swap.
 map.createPane("basemaps");
 map.getPane("basemaps").style.zIndex = 250;
+// Regional vector basemap backdrop sits in an even lower pane, behind the trail maps.
+map.createPane("backdrop");
+map.getPane("backdrop").style.zIndex = 200;
 const status = document.getElementById("status");
+
+// ---- Regional vector basemap backdrop (offline PMTiles, muted full basemap) ----
+try {
+  protomapsL.leafletLayer({ url: "pnw.pmtiles", flavor: "grayscale", lang: "en", pane: "backdrop" }).addTo(map);
+} catch (e) { console.warn("backdrop layer failed:", e); }
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
 function show(which) {
