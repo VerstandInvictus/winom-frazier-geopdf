@@ -72,6 +72,23 @@ function parseGpxLatLngs(xmlText) {
     .filter(([la, lo]) => !Number.isNaN(la) && !Number.isNaN(lo));
 }
 
+// ---- 2025 vector map (SVG overlay) ----
+let svg2025 = null;
+fetch("./page2_overlay.json")
+  .then((r) => (r.ok ? r.json() : null))
+  .then((meta) => {
+    if (!meta) return;
+    return fetch("./page2.svg").then((r) => r.text()).then((txt) => {
+      const el = new DOMParser().parseFromString(txt, "image/svg+xml").documentElement;
+      svg2025 = L.svgOverlay(el, meta.bounds, { opacity: 0.95, interactive: false });
+      document.getElementById("svg2025").addEventListener("change", (e) => {
+        if (e.target.checked) { svg2025.addTo(map); map.fitBounds(meta.bounds); }
+        else map.removeLayer(svg2025);
+      });
+    });
+  })
+  .catch(() => {});
+
 document.getElementById("gpx").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
