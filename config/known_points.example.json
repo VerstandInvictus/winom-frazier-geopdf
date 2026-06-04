@@ -1,0 +1,7 @@
+{
+  "_comment": "Replace with 4-6 real features visible on the map, spread toward the N/S/E/W edges. lat/lon in decimal degrees (WGS84). Copy this file to config/known_points.json and fill in.",
+  "points": [
+    {"name": "Example Trailhead", "lat": 45.05, "lon": -118.56},
+    {"name": "Example Campground", "lat": 45.18, "lon": -118.40}
+  ]
+}
