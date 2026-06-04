@@ -24,17 +24,23 @@ const map = L.map("map", { zoomControl: true });
 // and GPS dot (in overlayPane) always render on top and never get hidden by a map swap.
 map.createPane("basemaps");
 map.getPane("basemaps").style.zIndex = 250;
-// Regional vector basemap backdrop sits in an even lower pane, behind the trail maps.
-map.createPane("backdrop");
-map.getPane("backdrop").style.zIndex = 200;
 const status = document.getElementById("status");
 
-// ---- Regional vector basemap backdrop (offline PMTiles, muted full basemap) ----
-try {
-  protomapsL.leafletLayer({ url: "pnw.pmtiles", flavor: "grayscale", lang: "en", pane: "backdrop" }).addTo(map);
-  // Extra z12 detail over Umatilla/Union/Baker/Grant counties (small add-on, renders at z>=12).
-  protomapsL.leafletLayer({ url: "pnw_z12.pmtiles", flavor: "grayscale", lang: "en", pane: "backdrop" }).addTo(map);
-} catch (e) { console.warn("backdrop layer failed:", e); }
+// ---- Tiered offline vector basemap (each tier in its own pane, all below the trail maps) ----
+// world z0-5 (global, no zoom-to-gray) < western US z6-10 < OR/WA/ID z11 < 4 counties z12.
+const BG_TIERS = [
+  ["bg-world", "world.pmtiles", 200],
+  ["bg-west", "westus.pmtiles", 205],
+  ["bg-orwaid", "orwaid.pmtiles", 210],
+  ["bg-county", "pnw_z12.pmtiles", 215],
+];
+for (const [pane, url, z] of BG_TIERS) {
+  map.createPane(pane);
+  map.getPane(pane).style.zIndex = z;
+  try {
+    protomapsL.leafletLayer({ url, flavor: "grayscale", lang: "en", pane }).addTo(map);
+  } catch (e) { console.warn("backdrop tier failed:", url, e); }
+}
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
 function show(which) {

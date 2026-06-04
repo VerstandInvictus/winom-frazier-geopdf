@@ -1,10 +1,11 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v6";
+const CACHE_VERSION = "wf-v7";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
   "./vendor/leaflet.js", "./vendor/leaflet.css", "./vendor/Leaflet.ImageOverlay.Rotated.js",
-  "./vendor/protomaps-leaflet.js", "./pnw.pmtiles", "./pnw_z12.pmtiles",
+  "./vendor/protomaps-leaflet.js",
+  "./world.pmtiles", "./westus.pmtiles", "./orwaid.pmtiles", "./pnw_z12.pmtiles",
   "./map2016.webp", "./overlay2016.json", "./page2.svg", "./page2_overlay.json",
 ];
 
