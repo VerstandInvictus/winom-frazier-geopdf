@@ -17,6 +17,7 @@ tiles/
 output/
 *.tmp
 viewer/guide_page2_*.png
+viewer/map2016.png
 viewer/page2.svg
 
 # Editor
