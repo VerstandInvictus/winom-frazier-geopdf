@@ -8,6 +8,7 @@ const points = [
   { name: "Winom TrailHead", lat: 45.011944, lon: -118.638611, px: null, py: null, marker: null, resid: null },
   { name: "Oriental TrailHead", lat: 44.975000, lon: -118.728611, px: null, py: null, marker: null, resid: null },
   { name: "Umapine OHV TrailHead", lat: 45.113889, lon: -118.561944, px: null, py: null, marker: null, resid: null },
+  { name: "Frazier TrailHead", lat: 45.1597, lon: -118.6397, px: null, py: null, marker: null, resid: null },
 ];
 let armed = 0;
 let affine = null;
