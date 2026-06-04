@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#2e6b2e" />
   <title>Winom-Frazier OHV Field Map</title>
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="vendor/leaflet.css" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <style>
     html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
@@ -23,12 +24,18 @@
   <div id="panel">
     <div class="row"><strong>Winom-Frazier OHV</strong></div>
     <div class="row" id="status">Loading…</div>
+    <div class="row">
+      Map: <button id="m2016" type="button">2016</button>
+      <button id="m2025" type="button">2025</button>
+    </div>
   </div>
   <div id="install-hint" hidden>
     For offline GPS, add this to your Home Screen (Share → Add to Home Screen), then open it from there.
     <button type="button">Got it</button>
   </div>
   <div id="map"></div>
+  <script src="vendor/leaflet.js"></script>
+  <script src="vendor/Leaflet.ImageOverlay.Rotated.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
