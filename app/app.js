@@ -20,6 +20,10 @@ if (navigator.storage && navigator.storage.persist) {
 
 // ---- Map core: 2016 raster (rotated overlay) + 2025 vector (SVG), toggle ----
 const map = L.map("map", { zoomControl: true });
+// Base maps go in a dedicated pane BELOW the default overlayPane, so the GPX track
+// and GPS dot (in overlayPane) always render on top and never get hidden by a map swap.
+map.createPane("basemaps");
+map.getPane("basemaps").style.zIndex = 250;
 const status = document.getElementById("status");
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
@@ -39,10 +43,10 @@ Promise.all([
 ]).then(([o16, o25, svgText]) => {
   const tl = L.latLng(o16.topleft), tr = L.latLng(o16.topright), bl = L.latLng(o16.bottomleft);
   const br = L.latLng(tr.lat + bl.lat - tl.lat, tr.lng + bl.lng - tl.lng);
-  layer2016 = L.imageOverlay.rotated("map2016.webp", tl, tr, bl, { opacity: 1, interactive: false });
+  layer2016 = L.imageOverlay.rotated("map2016.webp", tl, tr, bl, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2016 = L.latLngBounds([tl, tr, bl, br]);
   const svgEl = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
-  layer2025 = L.svgOverlay(svgEl, o25.bounds, { opacity: 1, interactive: false });
+  layer2025 = L.svgOverlay(svgEl, o25.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2025 = L.latLngBounds(o25.bounds);
   show("2016");
   status.textContent = "Map loaded.";
