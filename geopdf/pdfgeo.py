@@ -12,7 +12,10 @@ from geopdf.crs import Bounds, bounds_from_gpts, crs_name_from_wkt
 @dataclass
 class Viewport:
     page_index: int
+    index: int
+    name: str
     bbox: list[float]
+    bbox_area: float
     bounds: Bounds
     crs_name: str
     wkt: str | None
@@ -29,52 +32,54 @@ def _floats(arr) -> list[float]:
     return [float(x) for x in arr]
 
 
-def _measure_to_viewport(page_index: int, bbox, measure) -> Viewport | None:
-    gpts = measure.get("/GPTS")
-    if gpts is None:
-        return None
-    gcs = measure.get("/GCS")
-    wkt = None
-    if gcs is not None and "/WKT" in gcs:
-        wkt = str(gcs["/WKT"])
-    gpts_f = _floats(gpts)
-    return Viewport(
-        page_index=page_index,
-        bbox=_floats(bbox) if bbox is not None else [],
-        bounds=bounds_from_gpts(gpts_f),
-        crs_name=crs_name_from_wkt(wkt),
-        wkt=wkt,
-        gpts=gpts_f,
-    )
+def _clean_name(name) -> str:
+    if name is None:
+        return ""
+    return str(name).replace("\x00", "").strip()
+
+
+def _bbox_area(bbox: list[float]) -> float:
+    if len(bbox) < 4:
+        return 0.0
+    return abs((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]))
 
 
 def decode_pdf(path) -> DecodeResult:
-    """Read the page /VP viewports.
+    """Read the page /VP viewports in document order (no reordering).
 
-    Returns viewports in GPS-priority order: the *last* viewport in the /VP
-    array comes first.  GPS apps (e.g. Avenza Maps) resolve georeferencing by
-    taking the final entry in the /VP array as the authoritative reference —
-    which is what produces the "wrong tiny inset" bug in ohv_single.  Returning
-    it at index 0 makes the primary GPS viewport directly accessible as
-    ``result.viewports[0]`` while preserving the full list for forensic work.
+    All viewports are returned faithfully with their /Name and page-space /BBox
+    so callers can distinguish the main map from inset/locator viewports.
     """
     result = DecodeResult(path=str(path))
     with pikepdf.open(str(path)) as pdf:
-        for i, page in enumerate(pdf.pages):
+        for pi, page in enumerate(pdf.pages):
             pageobj = getattr(page, "obj", page)
             vp = pageobj.get("/VP")
             if vp is None:
                 continue
-            page_viewports: list[Viewport] = []
-            for viewport in vp:
+            for vi, viewport in enumerate(vp):
                 measure = viewport.get("/Measure")
                 if measure is None:
                     continue
-                v = _measure_to_viewport(i, viewport.get("/BBox"), measure)
-                if v is not None:
-                    page_viewports.append(v)
-            # Reverse so that the last /VP entry (GPS-primary) is at index 0.
-            result.viewports.extend(reversed(page_viewports))
+                gpts = measure.get("/GPTS")
+                if gpts is None:
+                    continue
+                gcs = measure.get("/GCS")
+                wkt = str(gcs["/WKT"]) if gcs is not None and "/WKT" in gcs else None
+                raw_bbox = viewport.get("/BBox")
+                bbox = _floats(raw_bbox) if raw_bbox is not None else []
+                gpts_f = _floats(gpts)
+                result.viewports.append(Viewport(
+                    page_index=pi,
+                    index=vi,
+                    name=_clean_name(viewport.get("/Name")),
+                    bbox=bbox,
+                    bbox_area=_bbox_area(bbox),
+                    bounds=bounds_from_gpts(gpts_f),
+                    crs_name=crs_name_from_wkt(wkt),
+                    wkt=wkt,
+                    gpts=gpts_f,
+                ))
     return result
 
 
