@@ -18,3 +18,7 @@ tr.armed { background: #fde68a; }
 input { font-size: 12px; }
 #rms { font-weight: bold; font-size: 13px; }
 #btns button { margin: 2px 4px 2px 0; font-size: 12px; }
+.cp-pin div {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #e11; border: 2px solid #fff; box-shadow: 0 0 3px #000;
+}

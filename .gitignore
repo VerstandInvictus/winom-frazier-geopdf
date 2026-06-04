@@ -16,7 +16,7 @@ Thumbs.db
 tiles/
 output/
 *.tmp
-viewer/guide_page2_hi.png
+viewer/guide_page2_*.png
 
 # Editor
 .idea/

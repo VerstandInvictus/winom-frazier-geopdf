@@ -1,6 +1,7 @@
 // Georeferencing picker for 2025 guide page 2.
 // Click trailheads on the rendered map; solve a pixel->lon/lat affine; export transform.json.
-const W = 6400, H = 4300, DPI = 200;   // matches output/guide_page2_hi.png (200 DPI render)
+const W = 6400, H = 4300, DPI = 200;   // ORIGINAL render (north points RIGHT)
+const DW = H, DH = W;                   // north-up display (original rotated 90° CCW): 4300 x 6400
 
 // Pre-seeded control points from the map's own coordinate table (DMS -> decimal).
 const points = [
@@ -11,14 +12,24 @@ const points = [
 let armed = 0;
 let affine = null;
 
-// ---- image map (pixel space, CRS.Simple) ----
+// ---- image map (north-up display, CRS.Simple) ----
 const imgMap = L.map("imgmap", { crs: L.CRS.Simple, minZoom: -6, maxZoom: 4, zoomSnap: 0 });
-const imgBounds = [[0, 0], [H, W]];
-L.imageOverlay("./guide_page2_hi.png", imgBounds).addTo(imgMap);
+const imgBounds = [[0, 0], [DH, DW]];
+L.imageOverlay("./guide_page2_northup.png", imgBounds).addTo(imgMap);
 imgMap.fitBounds(imgBounds);
 
-const latlngToPx = (ll) => ({ px: ll.lng, py: H - ll.lat });
-const pxToLatlng = (px, py) => [H - py, px];
+// Always-visible draggable pin (avoids Leaflet's missing default marker-icon image).
+const pinIcon = L.divIcon({ className: "cp-pin", html: "<div></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
+
+// Display (north-up) CRS.Simple latlng <-> ORIGINAL render pixel (display = original rotated 90° CCW).
+function latlngToPx(ll) {
+  const dx = ll.lng, dy = DH - ll.lat;       // display pixel (top-left origin)
+  return { px: (W - 1) - dy, py: dx };
+}
+function pxToLatlng(px, py) {
+  const dx = py, dy = (W - 1) - px;
+  return [DH - dy, dx];
+}
 
 imgMap.on("click", (e) => {
   if (armed == null || armed >= points.length) return;
@@ -35,7 +46,7 @@ function setPixel(i, px, py) {
   if (p.marker) {
     p.marker.setLatLng(pxToLatlng(px, py));
   } else {
-    p.marker = L.marker(pxToLatlng(px, py), { draggable: true })
+    p.marker = L.marker(pxToLatlng(px, py), { draggable: true, icon: pinIcon })
       .addTo(imgMap).bindTooltip(p.name, { permanent: true, direction: "top" });
     p.marker.on("drag dragend", (ev) => {
       const q = latlngToPx(ev.target.getLatLng());
