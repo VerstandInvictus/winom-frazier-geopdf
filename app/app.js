@@ -26,20 +26,20 @@ map.createPane("basemaps");
 map.getPane("basemaps").style.zIndex = 250;
 const status = document.getElementById("status");
 
-// ---- Tiered offline vector basemap (each tier in its own pane, all below the trail maps) ----
-// world z0-5 (global, no zoom-to-gray) < western US z6-10 < OR/WA/ID z11 < 4 counties z12.
+// ---- Offline vector basemap: global base + western-US detail, both overzoomed ----
+// Only two layers (stacking many protomaps-leaflet layers made them paint over each other =
+// gray/flicker). Panes 240/245 sit below the trail maps (250) and clear of Leaflet's default
+// tilePane (200). maxDataZoom lets a layer overzoom past its deepest tiles instead of going gray.
 const BG_TIERS = [
-  ["bg-world", "world.pmtiles", 200],
-  ["bg-west", "westus.pmtiles", 205],
-  ["bg-orwaid", "orwaid.pmtiles", 210],
-  ["bg-county", "pnw_z12.pmtiles", 215],
+  ["bg-world", "world.pmtiles", 240, 5],   // global context, data z0-5
+  ["bg-west", "westus.pmtiles", 245, 10],  // western US detail, data z6-10
 ];
-for (const [pane, url, z] of BG_TIERS) {
+for (const [pane, url, z, maxDataZoom] of BG_TIERS) {
   map.createPane(pane);
   map.getPane(pane).style.zIndex = z;
   try {
-    protomapsL.leafletLayer({ url, flavor: "grayscale", lang: "en", pane }).addTo(map);
-  } catch (e) { console.warn("backdrop tier failed:", url, e); }
+    protomapsL.leafletLayer({ url, flavor: "grayscale", lang: "en", pane, maxDataZoom }).addTo(map);
+  } catch (e) { console.warn("basemap layer failed:", url, e); }
 }
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
