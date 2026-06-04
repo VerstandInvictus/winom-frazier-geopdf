@@ -8,10 +8,27 @@ from geopdf.render import render_page_png
 MAIN_GPTS = [44.8938, -118.766, 45.2208, -118.759, 45.2157, -118.362, 44.8888, -118.372]
 
 
-def test_corners_map_to_image_pixels():
+def test_corners_map_north_up():
     gcps = corners_to_gcps(MAIN_GPTS, width=1000, height=800)
-    assert (gcps[0].col, gcps[0].row) == (0, 0)            # first corner = top-left
-    assert gcps[0].y == 44.8938 and gcps[0].x == -118.766
+    tl = next(g for g in gcps if g.col == 0 and g.row == 0)
+    assert tl.y == 45.2208 and tl.x == -118.759     # NW corner at top-left
+    bl = next(g for g in gcps if g.col == 0 and g.row == 800)
+    assert bl.y == 44.8938 and bl.x == -118.766     # SW corner at bottom-left
+
+
+def test_geotiff_is_north_up(tmp_path):
+    import numpy as np
+    import rasterio
+    from PIL import Image
+    png = tmp_path / "m.png"
+    Image.fromarray(np.zeros((80, 100, 3), dtype=np.uint8)).save(png)
+    gcps = corners_to_gcps(MAIN_GPTS, 100, 80)
+    out = tmp_path / "o.tif"
+    write_geotiff(png, gcps, out)
+    with rasterio.open(out) as ds:
+        top_y = (ds.transform * (0, 0))[1]              # latitude at top row
+        bottom_y = (ds.transform * (0, ds.height))[1]   # latitude at bottom row
+        assert top_y > bottom_y                          # north-up: top row is more northerly
 
 
 def test_write_geotiff_bounds_match(tmp_path):

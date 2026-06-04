@@ -10,21 +10,29 @@ from PIL import Image
 
 
 def corners_to_gcps(gpts: list[float], width: int, height: int) -> list[GCP]:
-    """Map 4 GPTS corners (lat,lon pairs) to image pixels.
+    """Map the 4 GPTS geographic corners to image pixel corners, north-up.
 
-    LPTS is fixed at [0 1 0 0 1 0 1 1] -> normalized (lx, ly) corners, ly up:
-      (0,1)=top-left  (0,0)=bottom-left  (1,0)=bottom-right  (1,1)=top-right
-    Pixel: col = lx*width, row = (1-ly)*height  (image y is down).
+    The rendered map is visually north-up, but the PDF viewport's LPTS/BBox
+    y-axis is inverted, so GPTS index order does NOT correspond to pixel-corner
+    order. Instead, classify the four corners by latitude/longitude and place:
+      NW -> top-left (0,0)      NE -> top-right (width,0)
+      SW -> bottom-left (0,h)   SE -> bottom-right (width,h)
+    Valid for north-up, near-axis-aligned maps (these USFS maps qualify).
     """
-    lpts = [(0.0, 1.0), (0.0, 0.0), (1.0, 0.0), (1.0, 1.0)]
-    gcps = []
-    for i, (lx, ly) in enumerate(lpts):
-        lat = gpts[i * 2]
-        lon = gpts[i * 2 + 1]
-        col = lx * width
-        row = (1.0 - ly) * height
-        gcps.append(GCP(row=row, col=col, x=lon, y=lat))
-    return gcps
+    pts = [(gpts[i * 2], gpts[i * 2 + 1]) for i in range(4)]  # (lat, lon)
+    by_lat = sorted(pts, key=lambda p: p[0])
+    south, north = by_lat[:2], by_lat[2:]
+    nw = min(north, key=lambda p: p[1])
+    ne = max(north, key=lambda p: p[1])
+    sw = min(south, key=lambda p: p[1])
+    se = max(south, key=lambda p: p[1])
+    placement = [
+        (nw, 0.0, 0.0),
+        (ne, float(width), 0.0),
+        (se, float(width), float(height)),
+        (sw, 0.0, float(height)),
+    ]
+    return [GCP(row=row, col=col, x=lon, y=lat) for (lat, lon), col, row in placement]
 
 
 def write_geotiff(png_path, gcps: list[GCP], out_tif) -> Path:
