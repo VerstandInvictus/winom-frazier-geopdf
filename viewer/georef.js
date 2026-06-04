@@ -9,6 +9,9 @@ const points = [
   { name: "Oriental TrailHead", lat: 44.975000, lon: -118.728611, px: null, py: null, marker: null, resid: null },
   { name: "Umapine OHV TrailHead", lat: 45.113889, lon: -118.561944, px: null, py: null, marker: null, resid: null },
   { name: "Frazier TrailHead", lat: 45.1597, lon: -118.6397, px: null, py: null, marker: null, resid: null },
+  // Tower Mtn Lookout: the sheet's own table misprints the longitude as -119°34' (off-map);
+  // these are the corrected real coords (-118°34', east by Umapine).
+  { name: "Tower Mtn Lookout", lat: 45.05422652503636, lon: -118.56829504301199, px: null, py: null, marker: null, resid: null },
 ];
 let armed = 0;
 let affine = null;
