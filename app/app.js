@@ -50,3 +50,27 @@ Promise.all([
 
 document.getElementById("m2016").addEventListener("click", () => show("2016"));
 document.getElementById("m2025").addEventListener("click", () => show("2025"));
+
+// ---- Live GPS: blue dot + accuracy ring + recenter ----
+let gpsDot = null, gpsRing = null, lastFix = null;
+const recenterBtn = document.getElementById("recenter");
+
+if ("geolocation" in navigator) {
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      lastFix = [latitude, longitude];
+      if (gpsDot) gpsDot.setLatLng(lastFix);
+      else gpsDot = L.circleMarker(lastFix, { radius: 7, color: "#1565c0", fillColor: "#1565c0", fillOpacity: 0.9, weight: 2 }).addTo(map);
+      if (gpsRing) { gpsRing.setLatLng(lastFix); gpsRing.setRadius(accuracy); }
+      else gpsRing = L.circle(lastFix, { radius: accuracy, color: "#1565c0", weight: 1, fillOpacity: 0.08 }).addTo(map);
+      recenterBtn.disabled = false;
+    },
+    (err) => { status.textContent = "GPS: " + err.message; },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+  );
+} else {
+  status.textContent = "GPS not available on this device/context.";
+}
+
+recenterBtn.addEventListener("click", () => { if (lastFix) map.setView(lastFix, Math.max(map.getZoom(), 14)); });
