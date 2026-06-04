@@ -51,12 +51,25 @@ def cmd_diagnose(_args):
     print(f"Wrote {findings}")
 
 
+def cmd_fix(_args):
+    from geopdf.fix_surgical import collapse_to_single_viewport
+    from geopdf.pdfgeo import decode_pdf
+    src = PROJECT_ROOT / "Winom-Frazier OHV.pdf"   # the 2016 Adobe original
+    out = OUTPUT / "Winom-Frazier OHV_corrected.pdf"
+    OUTPUT.mkdir(exist_ok=True)
+    n = collapse_to_single_viewport(src, out, keep_name="Winom-FrazierData")
+    vp = decode_pdf(out).viewports[0]
+    print(f"Collapsed {src.name}: kept {n} viewport -> {out}")
+    print(f"  remaining viewport: {vp.name}  area_km2={vp.bounds.area_km2:.1f}  center={vp.bounds.center}")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="cli")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("decode").set_defaults(func=cmd_decode)
     sub.add_parser("report").set_defaults(func=cmd_report)
     sub.add_parser("diagnose").set_defaults(func=cmd_diagnose)
+    sub.add_parser("fix").set_defaults(func=cmd_fix)
     args = parser.parse_args()
     args.func(args)
 
