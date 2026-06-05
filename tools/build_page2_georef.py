@@ -24,8 +24,8 @@ SCALE = T["dpi"] / 72.0                     # render-px per PDF-point
 WGS84_WKT = ('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],'
              'PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
 
-# Neatline of the main map (render px, original orientation), estimated from the grid.
-NEATLINE_PX = (1690, 80, 6020, 4220)
+# Neatline of the main map (render px, original orientation) — crop excluding title + legend.
+NEATLINE_PX = (2004, 376, 5769, 4080)
 
 
 def build_geopdf(out):
@@ -55,8 +55,13 @@ def build_geopdf(out):
 
 
 def build_svg(out_svg, out_json):
-    lons = [p[0] for p in corners]
-    lats = [p[1] for p in corners]
+    # Crop extent = the map neatline (render-px) -> lon/lat, so the viewBox + bounds frame just
+    # the cropped map; title/legend outside the neatline are clipped away.
+    nb = NEATLINE_PX
+    pxc = [(nb[0], nb[1]), (nb[2], nb[1]), (nb[2], nb[3]), (nb[0], nb[3])]
+    nb_lonlat = [(a * px + b * py + c, d * px + e * py + f) for px, py in pxc]
+    lons = [p[0] for p in nb_lonlat]
+    lats = [p[1] for p in nb_lonlat]
     minlon, maxlon, minlat, maxlat = min(lons), max(lons), min(lats), max(lats)
     # page svg coords (sx,sy; y-down points) -> overlay coords (ux=lon, uy=-lat):
     #   lon = a*SCALE*sx + b*SCALE*sy + c ;  lat = d*SCALE*sx + e*SCALE*sy + f
@@ -68,8 +73,6 @@ def build_svg(out_svg, out_json):
     inner = re.sub(r"^.*?<svg[^>]*>", "", svg, count=1, flags=re.S)
     inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
     # clip to the map neatline: its 4 render-px corners -> overlay coords (lon, -lat)
-    nb = NEATLINE_PX
-    pxc = [(nb[0], nb[1]), (nb[2], nb[1]), (nb[2], nb[3]), (nb[0], nb[3])]
     poly = " ".join(f"{a*px + b*py + c},{-(d*px + e*py + f)}" for px, py in pxc)
     vb = f"{minlon} {-maxlat} {maxlon - minlon} {maxlat - minlat}"
     wrapped = (

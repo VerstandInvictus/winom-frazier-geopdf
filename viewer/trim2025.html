@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trim 2025 map — crop picker</title>
+<style>
+  html, body { margin: 0; font-family: system-ui, sans-serif; background: #222; color: #eee; }
+  #bar { position: sticky; top: 0; z-index: 10; background: #111; padding: 8px 12px;
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 6px #000; }
+  #bar b { color: #9cf; }
+  #out { font-family: ui-monospace, monospace; font-size: 15px; background: #000; color: #6f6;
+    padding: 4px 8px; border-radius: 4px; user-select: all; }
+  #cursor { font-family: ui-monospace, monospace; color: #fc6; min-width: 130px; }
+  button { font-size: 14px; padding: 4px 10px; cursor: pointer; }
+  label { font-size: 13px; }
+  #wrap { position: relative; display: inline-block; line-height: 0; margin: 10px; }
+  #img { max-width: calc(100vw - 20px); height: auto; display: block; cursor: crosshair; }
+  #cv { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .hint { font-size: 13px; color: #bbb; }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <span class="hint"><b>Click</b> the corners of the map you want to KEEP (title/legend outside it get cropped).</span>
+    <span id="cursor">px: —, —</span>
+    <span>crop&nbsp;=&nbsp;<span id="out">click 2+ points…</span></span>
+    <button id="undo">Undo</button>
+    <button id="clear">Clear</button>
+    <label><input type="checkbox" id="showcur" checked /> show current crop</label>
+  </div>
+  <div id="wrap">
+    <img id="img" src="../output/guide_page2_hi.png" alt="2025 page 2" />
+    <canvas id="cv"></canvas>
+  </div>
+<script>
+const CURRENT_NEATLINE = [1690, 80, 6020, 4220]; // (x0,y0,x1,y1) in natural px — for reference
+const img = document.getElementById("img");
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const out = document.getElementById("out");
+const cursor = document.getElementById("cursor");
+let pts = [];           // clicked points in NATURAL pixel coords
+let scale = 1;          // natural px per displayed px
+
+function fit() {
+  scale = img.naturalWidth / img.clientWidth;
+  cv.width = img.clientWidth;
+  cv.height = img.clientHeight;
+  draw();
+}
+function toNatural(ev) {
+  const r = img.getBoundingClientRect();
+  return [Math.round((ev.clientX - r.left) * scale), Math.round((ev.clientY - r.top) * scale)];
+}
+function bbox() {
+  if (pts.length < 2) return null;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+function rectDisp(b) { return [b[0] / scale, b[1] / scale, (b[2] - b[0]) / scale, (b[3] - b[1]) / scale]; }
+function draw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (document.getElementById("showcur").checked) {
+    const c = rectDisp(CURRENT_NEATLINE);
+    ctx.strokeStyle = "rgba(90,160,255,0.9)"; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+    ctx.strokeRect(...c); ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(90,160,255,0.95)"; ctx.font = "12px system-ui";
+    ctx.fillText("current crop", c[0] + 4, c[1] + 14);
+  }
+  const b = bbox();
+  if (b) {
+    const r = rectDisp(b);
+    ctx.fillStyle = "rgba(255,60,60,0.12)"; ctx.fillRect(...r);
+    ctx.strokeStyle = "rgba(255,60,60,0.95)"; ctx.lineWidth = 2; ctx.strokeRect(...r);
+  }
+  ctx.fillStyle = "#ff3";
+  for (const p of pts) { ctx.beginPath(); ctx.arc(p[0] / scale, p[1] / scale, 4, 0, 7); ctx.fill(); }
+}
+function refresh() {
+  draw();
+  const b = bbox();
+  out.textContent = b ? `(${b[0]}, ${b[1]}, ${b[2]}, ${b[3]})` : "click 2+ points…";
+}
+img.addEventListener("click", (ev) => { pts.push(toNatural(ev)); refresh(); });
+img.addEventListener("mousemove", (ev) => { const p = toNatural(ev); cursor.textContent = `px: ${p[0]}, ${p[1]}`; });
+document.getElementById("undo").addEventListener("click", () => { pts.pop(); refresh(); });
+document.getElementById("clear").addEventListener("click", () => { pts = []; refresh(); });
+document.getElementById("showcur").addEventListener("change", draw);
+img.addEventListener("load", fit);
+window.addEventListener("resize", fit);
+if (img.complete) fit();
+</script>
+</body>
+</html>
