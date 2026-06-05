@@ -1,9 +1,9 @@
 """Build a rotated raster overlay for heppner ohv.pdf page 1 (already geocoded).
 
-Page 0 carries an embedded /VP viewport (NAD83 Oregon North State Plane GCS, GPTS in lat/lon),
-so we read the corners straight from the PDF -- no control-point picking. Renders the page,
-crops to the viewport bbox, and writes a rotated-raster overlay like the Desolation map (its
-topo base is CMYK rasters that render dark as SVG, so raster it is).
+Page 0 carries an embedded /VP viewport (NAD83 Oregon North State Plane GCS, GPTS in lat/lon).
+Read the corners straight from the PDF -- but map them via LPTS normalization, because this
+sheet's BBox is given with reversed y-order (y0 > y1), so a naive top/bottom assumption flips it.
+The map prints north-up. Rendered + cropped to the bbox -> raster overlay like the others.
 
 Writes: viewer/heppner.webp, viewer/heppner_overlay.json {topleft,topright,bottomleft} [lat,lon]
 """
@@ -25,21 +25,24 @@ def build(out_webp, out_json):
     obj = pdf.pages[PAGE].obj
     ph = float(obj.MediaBox[3])
     vp = obj.VP[0]
-    bx = [float(x) for x in vp.BBox]
-    gpts = [float(x) for x in vp.Measure.GPTS]  # lat,lon pairs, LPTS order [0,1, 0,0, 1,0, 1,1]
+    x0, y0, x1, y1 = [float(v) for v in vp.BBox]
+    lpts = [float(v) for v in vp.Measure.LPTS]
+    gpts = [float(v) for v in vp.Measure.GPTS]
     pdf.close()
-    x_left, x_right = min(bx[0], bx[2]), max(bx[0], bx[2])
-    y_bot, y_top = min(bx[1], bx[3]), max(bx[1], bx[3])  # PDF points, y-up
 
-    # render full page, crop to the viewport bbox (render px, y-down from top)
+    # LPTS normalized corner -> geo [lat,lon]; normalize PDF points against the BBox as given
+    lk = {(round(lpts[i]), round(lpts[i + 1])): [gpts[i], gpts[i + 1]] for i in range(0, 8, 2)}
+    def geo(px, py):
+        return lk[(round((px - x0) / (x1 - x0)), round((py - y0) / (y1 - y0)))]
+
+    xl, xr = min(x0, x1), max(x0, x1)
+    yb, yt = min(y0, y1), max(y0, y1)  # PDF y-up: yt = page-top of the region
+    overlay = {"topleft": geo(xl, yt), "topright": geo(xr, yt), "bottomleft": geo(xl, yb)}
+
     fitz.open(str(SRC))[PAGE].get_pixmap(matrix=fitz.Matrix(SCALE, SCALE)).save(ROOT / "output" / "heppner_hi.png")
     img = Image.open(ROOT / "output" / "heppner_hi.png").convert("RGB")
-    crop = (round(x_left * SCALE), round((ph - y_top) * SCALE),
-            round(x_right * SCALE), round((ph - y_bot) * SCALE))
+    crop = (round(xl * SCALE), round((ph - yt) * SCALE), round(xr * SCALE), round((ph - yb) * SCALE))
     img.crop(crop).save(out_webp, "WEBP", quality=82, method=6)
-
-    # LPTS [0,1]=TL, [0,0]=BL, [1,0]=BR, [1,1]=TR -> GPTS pairs
-    overlay = {"topleft": gpts[0:2], "topright": gpts[6:8], "bottomleft": gpts[2:4]}
     Path(out_json).write_text(json.dumps(overlay))
     return Image.open(out_webp).size, overlay
 
