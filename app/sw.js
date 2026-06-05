@@ -1,8 +1,9 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v22";
+const CACHE_VERSION = "wf-v23";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
-  "./icons/icon-192.png", "./icons/icon-512.png",
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
+  "./favicon.svg", "./favicon.ico", "./apple-touch-icon.png",
   "./vendor/leaflet.js", "./vendor/leaflet.css", "./vendor/Leaflet.ImageOverlay.Rotated.js",
   "./vendor/protomaps-leaflet.js",
   "./world.pmtiles", "./westus.pmtiles",
@@ -12,11 +13,12 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  // cache:"reload" forces each precache fetch to the network, bypassing the browser HTTP cache
-  // (GitHub Pages' max-age=600) -- otherwise a new version would re-cache stale files.
+  // cache:"no-cache" revalidates each precache fetch with the server (ETag), so a new version
+  // never re-stores a stale file from the browser HTTP cache (GitHub Pages' max-age=600).
+  // Unchanged big maps return 304 (no re-download) -- only changed files re-fetch.
   e.waitUntil(
     caches.open(CACHE_VERSION)
-      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: "reload" }))))
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: "no-cache" }))))
       .then(() => self.skipWaiting())
   );
 });

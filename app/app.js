@@ -17,11 +17,10 @@ if ("serviceWorker" in navigator) {
     }
   });
   // updateViaCache:"none" -> sw.js is always checked against the network, never the HTTP cache.
-  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then((reg) => {
-    reg.update(); // explicitly check for a newer worker on every launch
-    const sw = reg.active || reg.waiting;
-    if (sw) sw.postMessage("version");
-  }).catch((e) => console.warn("SW register failed", e));
+  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+    .then((reg) => reg.update()) // explicitly check for a newer worker on every launch
+    .catch((e) => console.warn("SW register failed", e));
+  navigator.serviceWorker.ready.then((reg) => { if (reg.active) reg.active.postMessage("version"); });
 }
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((granted) => console.log("persistent storage:", granted));
