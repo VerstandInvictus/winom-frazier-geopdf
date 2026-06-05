@@ -64,17 +64,19 @@ Promise.all([
   fetch("page2_overlay.json").then((r) => r.json()),
   fetch("page2.svg").then((r) => r.text()),
   fetch("desolation_overlay.json").then((r) => r.json()),
-  fetch("desolation.svg").then((r) => r.text()),
-]).then(([o16, o25, svg25, oDes, svgDes]) => {
+]).then(([o16, o25, svg25, oDes]) => {
   const tl = L.latLng(o16.topleft), tr = L.latLng(o16.topright), bl = L.latLng(o16.bottomleft);
   const br = L.latLng(tr.lat + bl.lat - tl.lat, tr.lng + bl.lng - tl.lng);
   layer2016 = L.imageOverlay.rotated("map2016.webp", tl, tr, bl, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2016 = L.latLngBounds([tl, tr, bl, br]);
-  const parse = (t) => new DOMParser().parseFromString(t, "image/svg+xml").documentElement;
-  layer2025 = L.svgOverlay(parse(svg25), o25.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
+  layer2025 = L.svgOverlay(new DOMParser().parseFromString(svg25, "image/svg+xml").documentElement,
+    o25.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2025 = L.latLngBounds(o25.bounds);
-  layerDes = L.svgOverlay(parse(svgDes), oDes.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
-  boundsDes = L.latLngBounds(oDes.bounds);
+  // Desolation: rotated raster overlay (its topo base is CMYK JPEGs that render dark as SVG).
+  const dtl = L.latLng(oDes.topleft), dtr = L.latLng(oDes.topright), dbl = L.latLng(oDes.bottomleft);
+  const dbr = L.latLng(dtr.lat + dbl.lat - dtl.lat, dtr.lng + dbl.lng - dtl.lng);
+  layerDes = L.imageOverlay.rotated("desolation.webp", dtl, dtr, dbl, { opacity: 1, interactive: false, pane: "basemaps" });
+  boundsDes = L.latLngBounds([dtl, dtr, dbl, dbr]);
   show("2016");
   status.textContent = "Map loaded.";
 }).catch((e) => { status.textContent = "Map load error: " + e.message; });

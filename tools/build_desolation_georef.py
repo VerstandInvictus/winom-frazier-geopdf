@@ -1,61 +1,46 @@
-"""Build a north-up SVG overlay for the 2025 guide page 1 (Desolation OHV map).
+"""Build a rotated raster overlay for the 2025 guide page 0 (Desolation OHV map).
 
-Reads config/desolation_transform.json (the picker's pixel->lon/lat affine) and writes:
-  viewer/desolation.svg            — north-up, geo-aligned vector overlay (clipped to the neatline)
-  viewer/desolation_overlay.json   — {bounds:[[minLat,minLon],[maxLat,maxLon]]}
+The Desolation map's topo base is embedded CMYK JPEGs, which render dark inside an SVG
+overlay. fitz's pixmap renderer converts CMYK correctly, so we use a RASTER overlay (like
+the 2016 map): crop the rendered page to the neatline and place it via L.imageOverlay.rotated
+using the neatline's geo corners (the affine encodes the ~180deg print rotation -> north-up).
 
-The Desolation map is the top-right panel of page 0 (printed rotated ~180deg); the affine
-encodes that rotation, so the overlay comes out north-up. The neatline is the printed map
-border (clicked in viewer/pick_desolation.html).
+Reads config/desolation_transform.json and output/guide_desolation_hi.png; writes:
+  viewer/desolation.webp           — cropped Desolation map (rotated-print orientation)
+  viewer/desolation_overlay.json   — {topleft,topright,bottomleft} geo corners ([lat,lon])
 """
 import json
-import re
 from pathlib import Path
-import fitz
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "2025_WinomFrazierDesolationGuide.pdf"
-PAGE = 0
 T = json.loads((ROOT / "config" / "desolation_transform.json").read_text())
 af = T["affine_px_to_lonlat"]
 a, b, c, d, e, f = af["a"], af["b"], af["c"], af["d"], af["e"], af["f"]
-SCALE = T["dpi"] / 72.0  # render-px per PDF-point
 
-# Map neatline (render px) — printed border corners, clockwise from top-left (clicked).
-NEATLINE_CORNERS = [(3868, 154), (6152, 152), (6150, 1898), (3870, 1898)]
+# Neatline bbox in 200-dpi render px (the printed map border the user clicked, axis-aligned).
+CROP = (3868, 152, 6152, 1898)
 
 
-def build_svg(out_svg, out_json):
-    # neatline corners -> lon/lat -> crop extent for the viewBox + bounds
-    nb_lonlat = [(a * px + b * py + c, d * px + e * py + f) for px, py in NEATLINE_CORNERS]
-    lons = [p[0] for p in nb_lonlat]
-    lats = [p[1] for p in nb_lonlat]
-    minlon, maxlon, minlat, maxlat = min(lons), max(lons), min(lats), max(lats)
-    # page svg coords (sx,sy; y-down points) -> overlay coords (ux=lon, uy=-lat):
-    A, C, E = a * SCALE, b * SCALE, c
-    B, D, F = -(d * SCALE), -(e * SCALE), -f
-    doc = fitz.open(str(SRC))
-    page = doc[PAGE]
-    svg = page.get_svg_image()
-    inner = re.sub(r"^.*?<svg[^>]*>", "", svg, count=1, flags=re.S)
-    inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
-    # clip to the neatline: its render-px corners -> overlay coords (lon, -lat)
-    poly = " ".join(f"{a*px + b*py + c},{-(d*px + e*py + f)}" for px, py in NEATLINE_CORNERS)
-    vb = f"{minlon} {-maxlat} {maxlon - minlon} {maxlat - minlat}"
-    wrapped = (
-        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
-        f'viewBox="{vb}" preserveAspectRatio="none">'
-        f'<defs><clipPath id="neat" clipPathUnits="userSpaceOnUse">'
-        f'<polygon points="{poly}"/></clipPath></defs>'
-        f'<g clip-path="url(#neat)"><g transform="matrix({A} {B} {C} {D} {E} {F})">{inner}</g></g>'
-        "</svg>"
-    )
-    Path(out_svg).write_text(wrapped, encoding="utf-8")
-    Path(out_json).write_text(json.dumps({"bounds": [[minlat, minlon], [maxlat, maxlon]]}))
-    return len(wrapped), {"bounds": [[minlat, minlon], [maxlat, maxlon]]}
+def latlon(px, py):
+    return [d * px + e * py + f, a * px + b * py + c]  # [lat, lon]
+
+
+def build(out_webp, out_json):
+    im = Image.open(ROOT / "output" / "guide_desolation_hi.png").convert("RGB")
+    crop = im.crop(CROP)
+    crop.save(out_webp, "WEBP", quality=82, method=6)
+    x0, y0, x1, y1 = CROP
+    overlay = {
+        "topleft": latlon(x0, y0),       # img TL  -> geo
+        "topright": latlon(x1, y0),      # img TR  -> geo
+        "bottomleft": latlon(x0, y1),    # img BL  -> geo
+    }
+    Path(out_json).write_text(json.dumps(overlay))
+    return crop.size, overlay
 
 
 if __name__ == "__main__":
-    n, ov = build_svg(ROOT / "viewer" / "desolation.svg", ROOT / "viewer" / "desolation_overlay.json")
-    print(f"desolation.svg ({n} bytes)")
+    size, ov = build(ROOT / "viewer" / "desolation.webp", ROOT / "viewer" / "desolation_overlay.json")
+    print(f"desolation.webp {size}")
     print("overlay:", json.dumps(ov))
