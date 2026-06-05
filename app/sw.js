@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v26";
+const CACHE_VERSION = "wf-v27";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -34,12 +34,18 @@ self.addEventListener("message", (e) => {
 });
 // Serve byte-range requests for the .pmtiles archive from the cached full file (offline).
 const _pmBufs = {};
-async function pmtilesBuffer(href) {
-  if (_pmBufs[href]) return _pmBufs[href];
-  const cache = await caches.open(CACHE_VERSION);
-  let res = await cache.match(href);
-  if (!res) { res = await fetch(href); try { await cache.put(href, res.clone()); } catch (e) {} }
-  _pmBufs[href] = await res.arrayBuffer();
+function pmtilesBuffer(href) {
+  // Cache the PROMISE (not the resolved buffer) so concurrent range requests for the same
+  // .pmtiles share ONE fetch. Otherwise, before the file is cached (e.g. during install), each
+  // tile triggers a full re-download and the racing duplicates fail ("Failed to fetch").
+  if (!_pmBufs[href]) {
+    _pmBufs[href] = (async () => {
+      const cache = await caches.open(CACHE_VERSION);
+      let res = await cache.match(href);
+      if (!res) { res = await fetch(href); try { await cache.put(href, res.clone()); } catch (e) {} }
+      return res.arrayBuffer();
+    })().catch((e) => { delete _pmBufs[href]; throw e; }); // clear on failure -> allow retry
+  }
   return _pmBufs[href];
 }
 self.addEventListener("fetch", (e) => {
