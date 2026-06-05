@@ -118,7 +118,7 @@ Promise.all([
   layerHep = L.imageOverlay.rotated("heppner.webp", htl, htr, hbl, { opacity: 1, interactive: false, pane: "heppner" });
   layerHep.addTo(map);
   showWinom("2016");
-  status.textContent = "Map loaded.";
+  status.textContent = ""; // clear "Loading…" (the row collapses when empty)
 }).catch((e) => { status.textContent = "Map load error: " + e.message; });
 
 document.getElementById("m2016").addEventListener("click", () => showWinom("2016"));
@@ -180,12 +180,18 @@ document.getElementById("gpx").addEventListener("change", (e) => {
   reader.readAsText(file);
 });
 
-// ---- Mini-legend collapse toggle ----
-(function legend() {
+// ---- Mini-legend + GeoPDFs collapse toggles ----
+(function toggles() {
   const box = document.getElementById("legend");
-  const btn = document.getElementById("legtoggle");
-  btn.addEventListener("click", () => {
+  const legBtn = document.getElementById("legtoggle");
+  legBtn.addEventListener("click", () => {
     box.classList.toggle("collapsed");
-    btn.textContent = box.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+    legBtn.textContent = box.classList.contains("collapsed") ? "Legend ▸" : "Legend ▾";
+  });
+  const pdfBtn = document.getElementById("pdftoggle");
+  const links = document.getElementById("pdflinks");
+  pdfBtn.addEventListener("click", () => {
+    links.hidden = !links.hidden;
+    pdfBtn.textContent = links.hidden ? "GeoPDFs ▸" : "GeoPDFs ▾";
   });
 })();

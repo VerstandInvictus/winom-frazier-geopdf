@@ -23,7 +23,10 @@
       width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 13px solid #2e6b2e; }
     button { font-size: 14px; padding: 4px 8px; }
     button.on { background: #2e6b2e; color: #fff; }
-    #pdfs a { margin: 0 5px; font-size: 13px; }
+    #pdftoggle { margin-left: 6px; }
+    #pdflinks { margin: 4px 0; }
+    #pdflinks a { margin-right: 10px; font-size: 13px; }
+    #status:empty { display: none; }
     #legend { margin-top: 6px; }
     #legend h4 { margin: 6px 0 2px; font-size: 12px; }
     #legend .item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
@@ -46,14 +49,15 @@
     </div>
     <div class="row"><button id="recenter" type="button" disabled>Recenter on me</button></div>
     <div class="row">GPX <input id="gpx" type="file" accept=".gpx,application/gpx+xml" /></div>
-    <div class="row" id="pdfs">GeoPDFs:
-      <a href="pdfs/winom-frazier-2016.pdf" target="_blank" rel="noopener">2016</a>
-      <a href="pdfs/winom-frazier-2025.pdf" target="_blank" rel="noopener">2025</a>
-      <a href="pdfs/desolation.pdf" target="_blank" rel="noopener">Desolation</a>
-      <a href="pdfs/heppner.pdf" target="_blank" rel="noopener">Heppner</a>
-    </div>
     <div id="legend">
       <button id="legtoggle" type="button">Legend ▾</button>
+      <button id="pdftoggle" type="button">GeoPDFs ▸</button>
+      <div id="pdflinks" hidden>
+        <a href="pdfs/winom-frazier-2016.pdf" target="_blank" rel="noopener">2016</a>
+        <a href="pdfs/winom-frazier-2025.pdf" target="_blank" rel="noopener">2025</a>
+        <a href="pdfs/desolation.pdf" target="_blank" rel="noopener">Desolation</a>
+        <a href="pdfs/heppner.pdf" target="_blank" rel="noopener">Heppner</a>
+      </div>
       <div class="body">
         <h4>Motorized trails</h4>
         <div class="item"><span class="sw dot" style="border-color:#2e8b2e"></span>Easy</div>
