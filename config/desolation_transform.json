@@ -1,0 +1,52 @@
+{
+  "image": "guide_desolation_hi.png",
+  "image_size": [
+    6400,
+    4300
+  ],
+  "dpi": 200,
+  "page_index": 0,
+  "affine_px_to_lonlat": {
+    "a": -0.00010973340673455049,
+    "b": 4.019078897327111e-07,
+    "c": -118.15511346144359,
+    "d": 6.199296586951325e-07,
+    "e": 7.991635007084663e-05,
+    "f": 44.74959283877868
+  },
+  "rms_m": 33.3,
+  "control_points": [
+    {
+      "name": "Desolation Butte Lookout",
+      "lat": 44.850565,
+      "lon": -118.664541,
+      "px": 4646,
+      "py": 1227,
+      "resid_m": 8.7
+    },
+    {
+      "name": "NF-45 / NF-10 jct",
+      "lat": 44.823794,
+      "lon": -118.678322,
+      "px": 4766,
+      "py": 889,
+      "resid_m": 50.7
+    },
+    {
+      "name": "Welch Creek CG",
+      "lat": 44.876963,
+      "lon": -118.778133,
+      "px": 5686,
+      "py": 1551,
+      "resid_m": 26.5
+    },
+    {
+      "name": "NF-10 / NF-480 (Olive Lake turnoff)",
+      "lat": 44.787581,
+      "lon": -118.592835,
+      "px": 3994,
+      "py": 446,
+      "resid_m": 33.0
+    }
+  ]
+}

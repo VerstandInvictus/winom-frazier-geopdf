@@ -46,35 +46,42 @@ for (const t of BG_TIERS) {
     protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "grayscale", lang: "en", pane: t.pane }, t.opts)).addTo(map);
   } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
-let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
+let layer2016 = null, layer2025 = null, layerDes = null, active = null;
+let bounds2016 = null, bounds2025 = null, boundsDes = null;
 
 function show(which) {
   if (which === active) return;
-  if (layer2016 && map.hasLayer(layer2016)) map.removeLayer(layer2016);
-  if (layer2025 && map.hasLayer(layer2025)) map.removeLayer(layer2025);
-  if (which === "2016" && layer2016) { layer2016.addTo(map); map.fitBounds(bounds2016); }
-  if (which === "2025" && layer2025) { layer2025.addTo(map); map.fitBounds(bounds2025); }
-  active = which;
+  for (const l of [layer2016, layer2025, layerDes]) if (l && map.hasLayer(l)) map.removeLayer(l);
+  let layer = null, bounds = null;
+  if (which === "2016") { layer = layer2016; bounds = bounds2016; }
+  else if (which === "2025") { layer = layer2025; bounds = bounds2025; }
+  else if (which === "des") { layer = layerDes; bounds = boundsDes; }
+  if (layer) { layer.addTo(map); map.fitBounds(bounds); active = which; }
 }
 
 Promise.all([
   fetch("overlay2016.json").then((r) => r.json()),
   fetch("page2_overlay.json").then((r) => r.json()),
   fetch("page2.svg").then((r) => r.text()),
-]).then(([o16, o25, svgText]) => {
+  fetch("desolation_overlay.json").then((r) => r.json()),
+  fetch("desolation.svg").then((r) => r.text()),
+]).then(([o16, o25, svg25, oDes, svgDes]) => {
   const tl = L.latLng(o16.topleft), tr = L.latLng(o16.topright), bl = L.latLng(o16.bottomleft);
   const br = L.latLng(tr.lat + bl.lat - tl.lat, tr.lng + bl.lng - tl.lng);
   layer2016 = L.imageOverlay.rotated("map2016.webp", tl, tr, bl, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2016 = L.latLngBounds([tl, tr, bl, br]);
-  const svgEl = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
-  layer2025 = L.svgOverlay(svgEl, o25.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
+  const parse = (t) => new DOMParser().parseFromString(t, "image/svg+xml").documentElement;
+  layer2025 = L.svgOverlay(parse(svg25), o25.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
   bounds2025 = L.latLngBounds(o25.bounds);
+  layerDes = L.svgOverlay(parse(svgDes), oDes.bounds, { opacity: 1, interactive: false, pane: "basemaps" });
+  boundsDes = L.latLngBounds(oDes.bounds);
   show("2016");
   status.textContent = "Map loaded.";
 }).catch((e) => { status.textContent = "Map load error: " + e.message; });
 
 document.getElementById("m2016").addEventListener("click", () => show("2016"));
 document.getElementById("m2025").addEventListener("click", () => show("2025"));
+document.getElementById("mdes").addEventListener("click", () => show("des"));
 
 // ---- Live GPS: blue dot + accuracy ring + recenter ----
 let gpsDot = null, gpsRing = null, lastFix = null;

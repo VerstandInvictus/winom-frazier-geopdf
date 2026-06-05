@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Desolation — point picker</title>
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #1d1d1d; color: #eee; display: flex; flex-direction: column; }
+  #bar { background: #111; padding: 6px 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 6px #000; z-index: 5; }
+  #bar b { color: #9cf; }
+  .hint { font-size: 12px; color: #bbb; }
+  #cursor { font-family: ui-monospace, monospace; color: #fc6; min-width: 120px; }
+  button { font-size: 13px; padding: 3px 9px; cursor: pointer; }
+  #scroll { flex: 1; overflow: auto; position: relative; }
+  #stage { position: relative; transform-origin: 0 0; }
+  #img { display: block; image-rendering: auto; }
+  .mk { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+  .mk .dot { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: #f33; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 3px #000; }
+  .mk .lbl { position: absolute; left: 8px; top: -8px; background: #f33; color: #fff; font: 12px/1 ui-monospace, monospace; padding: 2px 4px; border-radius: 3px; white-space: nowrap; }
+  #list { position: absolute; top: 52px; right: 10px; width: 230px; max-height: 70vh; overflow: auto; background: rgba(0,0,0,0.82);
+    border: 1px solid #444; border-radius: 6px; padding: 6px; z-index: 6; }
+  #list h4 { margin: 2px 0 4px; font-size: 12px; color: #9cf; }
+  #pts { width: 100%; height: 200px; background: #000; color: #6f6; border: 0; font: 12px/1.4 ui-monospace, monospace; resize: vertical; }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <span class="hint"><b>Click</b> points you can look up coordinates for (trailheads, junctions, the campground). Each gets a number + pixel coords.</span>
+    <span id="cursor">px: —, —</span>
+    <button id="zin">＋</button><button id="zout">－</button>
+    <button id="focusmap">Map</button><button id="focuspage">Whole page</button>
+    <button id="undo">Undo</button><button id="clear">Clear</button>
+  </div>
+  <div id="scroll">
+    <div id="stage">
+      <img id="img" src="../output/guide_desolation_hi.png" alt="Desolation map (p0)" />
+    </div>
+  </div>
+  <div id="list">
+    <h4>Picked points (pixel x, y) — copy &amp; send me with lat/lon</h4>
+    <textarea id="pts" readonly placeholder="click points on the map…"></textarea>
+  </div>
+<script>
+const MAP_REGION = [3700, 150, 6300, 2250]; // Desolation map bbox in natural (200dpi) px
+const img = document.getElementById("img");
+const stage = document.getElementById("stage");
+const scroll = document.getElementById("scroll");
+const pts = document.getElementById("pts");
+const cursor = document.getElementById("cursor");
+let zoom = 1, marks = [];
+
+function applyZoom() {
+  img.style.width = img.naturalWidth * zoom + "px";
+  stage.style.width = img.naturalWidth * zoom + "px";
+  stage.style.height = img.naturalHeight * zoom + "px";
+  for (const m of marks) { m.el.style.left = m.x * zoom + "px"; m.el.style.top = m.y * zoom + "px"; }
+}
+function focus(r) {
+  const z = Math.min(scroll.clientWidth / (r[2] - r[0]), scroll.clientHeight / (r[3] - r[1])) * 0.96;
+  zoom = z; applyZoom();
+  scroll.scrollLeft = r[0] * zoom - 8;
+  scroll.scrollTop = r[1] * zoom - 8;
+}
+function toNatural(ev) {
+  const rect = img.getBoundingClientRect();
+  return [Math.round((ev.clientX - rect.left) / zoom), Math.round((ev.clientY - rect.top) / zoom)];
+}
+function redrawList() {
+  pts.value = marks.map((m, i) => `${i + 1}\t${m.x}\t${m.y}`).join("\n");
+}
+function addMark(x, y) {
+  const el = document.createElement("div");
+  el.className = "mk";
+  el.innerHTML = `<div class="dot"></div><div class="lbl">${marks.length + 1}: ${x}, ${y}</div>`;
+  stage.appendChild(el);
+  const m = { x, y, el }; marks.push(m);
+  el.style.left = x * zoom + "px"; el.style.top = y * zoom + "px";
+  redrawList();
+}
+img.addEventListener("click", (ev) => { const [x, y] = toNatural(ev); addMark(x, y); });
+img.addEventListener("mousemove", (ev) => { const [x, y] = toNatural(ev); cursor.textContent = `px: ${x}, ${y}`; });
+document.getElementById("zin").addEventListener("click", () => { zoom *= 1.4; applyZoom(); });
+document.getElementById("zout").addEventListener("click", () => { zoom /= 1.4; applyZoom(); });
+document.getElementById("focusmap").addEventListener("click", () => focus(MAP_REGION));
+document.getElementById("focuspage").addEventListener("click", () => focus([0, 0, img.naturalWidth, img.naturalHeight]));
+document.getElementById("undo").addEventListener("click", () => { const m = marks.pop(); if (m) m.el.remove(); redrawList(); });
+document.getElementById("clear").addEventListener("click", () => { marks.forEach(m => m.el.remove()); marks = []; redrawList(); });
+img.addEventListener("load", () => focus(MAP_REGION));
+if (img.complete) focus(MAP_REGION);
+</script>
+</body>
+</html>
