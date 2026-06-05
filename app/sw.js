@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v28";
+const CACHE_VERSION = "wf-v29";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -18,11 +18,23 @@ const ASSETS = [
 const DATA = ["./world.pmtiles", "./westus.pmtiles", "./map2016.webp", "./page2.svg", "./desolation.webp", "./heppner.webp"];
 const CODE = ASSETS.filter((u) => !DATA.includes(u));
 
+// href -> promise that resolves when that big map finishes precaching, so the fetch handler can
+// WAIT for the install's single download instead of starting a competing one (which the browser
+// would cancel -> "Failed to fetch" at low zoom while installing).
+const _ready = {};
 self.addEventListener("install", (e) => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE_VERSION);
-    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" })));
-    await c.addAll(DATA);
+    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" }))); // small + always fresh
+    // Precache big maps in the background (world first) so the worker takes control immediately;
+    // the fetch handler coordinates via _ready rather than blocking on this.
+    (async () => {
+      for (const u of DATA) {
+        const href = new URL(u, self.registration.scope).href;
+        _ready[href] = c.add(u).catch(() => {});
+        await _ready[href];
+      }
+    })();
     await self.skipWaiting();
   })());
 });
@@ -47,6 +59,7 @@ self.addEventListener("fetch", (e) => {
   const range = e.request.headers.get("range");
   if (url.pathname.endsWith(".pmtiles") && range) {
     e.respondWith((async () => {
+      if (_ready[url.href]) { try { await _ready[url.href]; } catch (_) {} } // wait for the install's download
       if (!_pmBufs[url.href]) {
         _pmBufs[url.href] = caches.open(CACHE_VERSION)
           .then((c) => c.match(url.href))
