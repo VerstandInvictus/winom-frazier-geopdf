@@ -24,6 +24,10 @@ const map = L.map("map", { zoomControl: true });
 // and GPS dot (in overlayPane) always render on top and never get hidden by a map swap.
 map.createPane("basemaps");
 map.getPane("basemaps").style.zIndex = 250;
+// Desolation sits in its own pane just above the Winom maps so it stays on top where the two
+// sheets' edges graze each other (still below the GPX/GPS panes).
+map.createPane("desolation");
+map.getPane("desolation").style.zIndex = 255;
 const status = document.getElementById("status");
 
 // ---- Offline vector basemap: global base + western-US detail ----
@@ -76,7 +80,7 @@ Promise.all([
   // Desolation: rotated raster overlay (its topo base is CMYK JPEGs that render dark as SVG).
   const dtl = L.latLng(oDes.topleft), dtr = L.latLng(oDes.topright), dbl = L.latLng(oDes.bottomleft);
   const dbr = L.latLng(dtr.lat + dbl.lat - dtl.lat, dtr.lng + dbl.lng - dtl.lng);
-  layerDes = L.imageOverlay.rotated("desolation.webp", dtl, dtr, dbl, { opacity: 1, interactive: false, pane: "basemaps" });
+  layerDes = L.imageOverlay.rotated("desolation.webp", dtl, dtr, dbl, { opacity: 1, interactive: false, pane: "desolation" });
   boundsDes = L.latLngBounds([dtl, dtr, dbl, dbr]);
   layerDes.addTo(map); // Desolation is a separate area -> always shown
   showWinom("2016");
