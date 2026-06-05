@@ -46,17 +46,18 @@ for (const t of BG_TIERS) {
     protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "grayscale", lang: "en", pane: t.pane }, t.opts)).addTo(map);
   } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
-let layer2016 = null, layer2025 = null, layerDes = null, active = null;
+let layer2016 = null, layer2025 = null, layerDes = null, activeWinom = null;
 let bounds2016 = null, bounds2025 = null, boundsDes = null;
 
-function show(which) {
-  if (which === active) return;
-  for (const l of [layer2016, layer2025, layerDes]) if (l && map.hasLayer(l)) map.removeLayer(l);
-  let layer = null, bounds = null;
-  if (which === "2016") { layer = layer2016; bounds = bounds2016; }
-  else if (which === "2025") { layer = layer2025; bounds = bounds2025; }
-  else if (which === "des") { layer = layerDes; bounds = boundsDes; }
-  if (layer) { layer.addTo(map); map.fitBounds(bounds); active = which; }
+// 2016 and 2025 cover the same Winom-Frazier area -> mutually exclusive toggle. Desolation is
+// a separate area to the SW that never overlaps, so it stays on; its button just flies there.
+function showWinom(which) {
+  if (layer2016 && map.hasLayer(layer2016)) map.removeLayer(layer2016);
+  if (layer2025 && map.hasLayer(layer2025)) map.removeLayer(layer2025);
+  const [layer, bounds] = which === "2016" ? [layer2016, bounds2016] : [layer2025, bounds2025];
+  if (layer) { layer.addTo(map); map.fitBounds(bounds); activeWinom = which; }
+  document.getElementById("m2016").classList.toggle("on", activeWinom === "2016");
+  document.getElementById("m2025").classList.toggle("on", activeWinom === "2025");
 }
 
 Promise.all([
@@ -77,13 +78,14 @@ Promise.all([
   const dbr = L.latLng(dtr.lat + dbl.lat - dtl.lat, dtr.lng + dbl.lng - dtl.lng);
   layerDes = L.imageOverlay.rotated("desolation.webp", dtl, dtr, dbl, { opacity: 1, interactive: false, pane: "basemaps" });
   boundsDes = L.latLngBounds([dtl, dtr, dbl, dbr]);
-  show("2016");
+  layerDes.addTo(map); // Desolation is a separate area -> always shown
+  showWinom("2016");
   status.textContent = "Map loaded.";
 }).catch((e) => { status.textContent = "Map load error: " + e.message; });
 
-document.getElementById("m2016").addEventListener("click", () => show("2016"));
-document.getElementById("m2025").addEventListener("click", () => show("2025"));
-document.getElementById("mdes").addEventListener("click", () => show("des"));
+document.getElementById("m2016").addEventListener("click", () => showWinom("2016"));
+document.getElementById("m2025").addEventListener("click", () => showWinom("2025"));
+document.getElementById("mdes").addEventListener("click", () => map.fitBounds(boundsDes));
 
 // ---- Live GPS: blue dot + accuracy ring + recenter ----
 let gpsDot = null, gpsRing = null, lastFix = null;

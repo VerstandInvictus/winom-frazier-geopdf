@@ -18,6 +18,8 @@
       background: #2e6b2e; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
     #install-hint button { margin-left: 8px; }
     button { font-size: 14px; padding: 4px 8px; }
+    button.on { background: #2e6b2e; color: #fff; }
+    #pdfs a { margin: 0 5px; font-size: 13px; }
     #legend { margin-top: 6px; }
     #legend h4 { margin: 6px 0 2px; font-size: 12px; }
     #legend .item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
@@ -41,6 +43,11 @@
     </div>
     <div class="row"><button id="recenter" type="button" disabled>Recenter on me</button></div>
     <div class="row">GPX <input id="gpx" type="file" accept=".gpx,application/gpx+xml" /></div>
+    <div class="row" id="pdfs">GeoPDFs:
+      <a href="pdfs/winom-frazier-2016.pdf" target="_blank" rel="noopener">2016</a>
+      <a href="pdfs/winom-frazier-2025.pdf" target="_blank" rel="noopener">2025</a>
+      <a href="pdfs/desolation.pdf" target="_blank" rel="noopener">Desolation</a>
+    </div>
     <div id="legend">
       <button id="legtoggle" type="button">Legend ▾</button>
       <div class="body">
