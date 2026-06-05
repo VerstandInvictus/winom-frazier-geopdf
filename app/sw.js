@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v30";
+const CACHE_VERSION = "wf-v31";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -12,47 +12,33 @@ const ASSETS = [
   "./heppner.webp", "./heppner_overlay.json",
 ];
 
-// Big maps: default cache (served from the HTTP cache when unchanged -> fast, no 40 MB
-// re-download that would saturate the connection and break in-flight basemap fetches).
-// Everything else is small and revalidated (cache:"no-cache") so updates are always fresh.
+// Small code/config is revalidated (cache:"no-cache") so updates are always fresh. Big maps use
+// the default cache: when unchanged they come from the browser HTTP cache (fast, no 40 MB
+// re-download that would saturate the connection and break in-flight basemap fetches on update).
 const DATA = ["./world.pmtiles", "./westus.pmtiles", "./map2016.webp", "./page2.svg", "./desolation.webp", "./heppner.webp"];
 const CODE = ASSETS.filter((u) => !DATA.includes(u));
 
-// href -> promise that resolves when that big map finishes precaching, so the fetch handler can
-// WAIT for the install's single download instead of starting a competing one (which the browser
-// would cancel -> "Failed to fetch" at low zoom while installing).
-const _ready = {};
 self.addEventListener("install", (e) => {
-  // Cache only the small code/config here (fast) so the worker activates + claims quickly. The big
-  // maps are precached in activate(), AFTER claiming -- so a brand-new install's first basemap
-  // fetches (still uncontrolled, going straight to the network) don't race the install download.
-  e.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((c) => c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" }))))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE_VERSION);
+    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" })));
+    await c.addAll(DATA);
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener("activate", (e) => {
-  e.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
-    await self.clients.claim(); // control the page BEFORE downloading big maps (no competing fetch)
-    const c = await caches.open(CACHE_VERSION);
-    for (const u of DATA) { // precache big maps (world first); the fetch handler waits via _ready
-      const href = new URL(u, self.registration.scope).href;
-      _ready[href] = c.add(u).catch(() => {});
-      await _ready[href];
-    }
-  })());
+  e.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
 });
 // Report the running cache version to the page (so it can show which build is live).
 self.addEventListener("message", (e) => {
   if (e.data === "version" && e.source) e.source.postMessage({ version: CACHE_VERSION });
 });
-// .pmtiles byte-range reads: if the file is cached, slice from an in-memory copy (offline). If
-// it is not cached yet (mid-install), pass the range request straight to the network -- GitHub
-// Pages serves ranges natively, and pulling the whole file here would duplicate the install's
-// download (the browser cancels one -> "Failed to fetch").
+// .pmtiles byte-range reads: if the file is cached, slice from an in-memory copy (offline). If it
+// is not cached yet (mid-install), pass the range request straight to the network -- GitHub Pages
+// serves ranges natively, and pulling the whole file here would duplicate the install download.
 const _pmBufs = {};
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
@@ -60,7 +46,6 @@ self.addEventListener("fetch", (e) => {
   const range = e.request.headers.get("range");
   if (url.pathname.endsWith(".pmtiles") && range) {
     e.respondWith((async () => {
-      if (_ready[url.href]) { try { await _ready[url.href]; } catch (_) {} } // wait for the install's download
       if (!_pmBufs[url.href]) {
         _pmBufs[url.href] = caches.open(CACHE_VERSION)
           .then((c) => c.match(url.href))
