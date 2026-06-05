@@ -37,8 +37,8 @@ confirm the pin sits on that feature in the overlaid map.
 
 ## Field viewer (offline PWA)
 
-A self-contained installable web app in `app/` (deployed via GitHub Pages). Open
-**https://verstandinvictus.github.io/winom-frazier-geopdf/** on your phone, then:
+A self-contained installable web app in `app/` (deployed via GitHub Pages at the
+custom domain **https://winom.app/**, set by `app/CNAME`). Open it on your phone, then:
 
 1. **Add to Home Screen** (Share → Add to Home Screen) — required for offline use and GPS on iOS.
 2. Launch it from the Home Screen icon and **allow Location**.
