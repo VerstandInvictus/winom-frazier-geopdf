@@ -30,6 +30,7 @@
     #pdflinks { margin: 4px 0; }
     #pdflinks a { margin-right: 10px; font-size: 13px; }
     #status:empty { display: none; }
+    #offline-ok { color: #2e6b2e; font-size: 12px; font-weight: 600; margin-left: 6px; white-space: nowrap; }
     #legend { margin-top: 6px; }
     #legend h4 { margin: 6px 0 2px; font-size: 12px; }
     #legend .item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
@@ -49,6 +50,7 @@
     <div class="row">
       Map: <button id="m2016" type="button">2016</button>
       <button id="m2025" type="button">2025</button>
+      <span id="offline-ok" hidden title="Maps saved on this device — works offline">✓ offline</span>
     </div>
     <div class="row"><button id="recenter" type="button" disabled>Recenter on me</button></div>
     <div class="row">GPX <input id="gpx" type="file" accept=".gpx,application/gpx+xml" /></div>

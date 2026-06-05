@@ -221,3 +221,27 @@ document.getElementById("gpx").addEventListener("change", (e) => {
     pdfBtn.textContent = links.hidden ? "GeoPDFs ▸" : "GeoPDFs ▾";
   });
 })();
+
+// ---- "✓ offline" badge: shown only when launched as an installed PWA AND every big map is cached ----
+(function offlineBadge() {
+  const badge = document.getElementById("offline-ok");
+  if (!badge || !("caches" in window)) return;
+  const isPWA = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (!isPWA) return; // a browser tab isn't relying on offline storage -> don't claim it
+  const NEED = ["world.pmtiles", "westus.pmtiles", "map2016.webp", "page2.svg", "desolation.webp", "heppner.webp"];
+  async function ready() {
+    const name = (await caches.keys()).find((k) => k.startsWith("wf-"));
+    if (!name) return false;
+    const c = await caches.open(name);
+    return (await Promise.all(NEED.map((u) => c.match(u)))).every(Boolean);
+  }
+  // Poll for a while -- the maps finish caching a few seconds after first load (precache-maps).
+  let tries = 0;
+  const timer = setInterval(() => {
+    ready().then((ok) => {
+      if (ok) { badge.hidden = false; clearInterval(timer); }
+      else if (++tries > 15) clearInterval(timer);
+    });
+  }, 3000);
+  ready().then((ok) => { if (ok) { badge.hidden = false; clearInterval(timer); } });
+})();
