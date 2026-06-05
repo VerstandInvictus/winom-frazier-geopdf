@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v29";
+const CACHE_VERSION = "wf-v30";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -23,26 +23,27 @@ const CODE = ASSETS.filter((u) => !DATA.includes(u));
 // would cancel -> "Failed to fetch" at low zoom while installing).
 const _ready = {};
 self.addEventListener("install", (e) => {
-  e.waitUntil((async () => {
-    const c = await caches.open(CACHE_VERSION);
-    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" }))); // small + always fresh
-    // Precache big maps in the background (world first) so the worker takes control immediately;
-    // the fetch handler coordinates via _ready rather than blocking on this.
-    (async () => {
-      for (const u of DATA) {
-        const href = new URL(u, self.registration.scope).href;
-        _ready[href] = c.add(u).catch(() => {});
-        await _ready[href];
-      }
-    })();
-    await self.skipWaiting();
-  })());
+  // Cache only the small code/config here (fast) so the worker activates + claims quickly. The big
+  // maps are precached in activate(), AFTER claiming -- so a brand-new install's first basemap
+  // fetches (still uncontrolled, going straight to the network) don't race the install download.
+  e.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then((c) => c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
+    await self.clients.claim(); // control the page BEFORE downloading big maps (no competing fetch)
+    const c = await caches.open(CACHE_VERSION);
+    for (const u of DATA) { // precache big maps (world first); the fetch handler waits via _ready
+      const href = new URL(u, self.registration.scope).href;
+      _ready[href] = c.add(u).catch(() => {});
+      await _ready[href];
+    }
+  })());
 });
 // Report the running cache version to the page (so it can show which build is live).
 self.addEventListener("message", (e) => {
