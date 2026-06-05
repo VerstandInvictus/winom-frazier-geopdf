@@ -18,6 +18,9 @@
       background: #2e6b2e; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
     #install-hint button { margin-left: 8px; }
     #install-btn { background: #fff; color: #2e6b2e; font-weight: bold; padding: 6px 12px; }
+    #shareicon { vertical-align: -3px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    #install-arrow { position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 13px solid #2e6b2e; }
     button { font-size: 14px; padding: 4px 8px; }
     button.on { background: #2e6b2e; color: #fff; }
     #pdfs a { margin: 0 5px; font-size: 13px; }
@@ -74,9 +77,11 @@
     </div>
   </div>
   <div id="install-hint" hidden>
-    <span id="install-ios" hidden>To install for offline use: tap <b>Share</b> → <b>Add to Home Screen</b>, then open it from that icon.</span>
+    <span id="install-msg">For offline maps, make sure this page got installed on your Home Screen and launch it from there.</span>
+    <span id="install-ios" hidden> Tap <svg id="shareicon" viewBox="0 0 24 24" width="15" height="15"><path d="M12 3v11M12 3l-4 4M12 3l4 4"/><path d="M6 10H4v10h16V10h-2"/></svg> <b>Share</b> below → <b>Add to Home Screen</b>.</span>
     <button id="install-btn" type="button" hidden>⤓ Install app</button>
     <button id="install-dismiss" type="button">Got it</button>
+    <div id="install-arrow" hidden></div>
   </div>
   <div id="map"></div>
   <script src="vendor/leaflet.js"></script>

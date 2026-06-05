@@ -14,12 +14,14 @@ if (navigator.storage && navigator.storage.persist) {
   if (!hint || standalone || localStorage.getItem("wf-hint-dismissed")) return;
   const btn = document.getElementById("install-btn");
   const iosText = document.getElementById("install-ios");
+  const arrow = document.getElementById("install-arrow");
   let deferred = null;
 
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();          // keep Chrome from auto-showing its mini-infobar
     deferred = e;
     iosText.hidden = true;
+    arrow.hidden = true;
     btn.hidden = false;
     hint.hidden = false;
   });
@@ -36,10 +38,11 @@ if (navigator.storage && navigator.storage.persist) {
     localStorage.setItem("wf-hint-dismissed", "1");
   });
 
-  // iOS Safari: no beforeinstallprompt -> show the Add-to-Home-Screen instruction.
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  // iOS Safari has no beforeinstallprompt -> point an arrow at the Share button.
+  const isIOS = ["iPhone", "iPad", "iPod"].includes(navigator.platform) ||
+    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (isIOS) { iosText.hidden = false; btn.hidden = true; hint.hidden = false; }
+  if (isIOS) { iosText.hidden = false; arrow.hidden = false; btn.hidden = true; hint.hidden = false; }
 })();
 
 // ---- Map core: 2016 raster (rotated overlay) + 2025 vector (SVG), toggle ----
