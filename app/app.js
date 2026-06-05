@@ -29,12 +29,15 @@ const status = document.getElementById("status");
 // ---- Offline vector basemap: global base + western-US detail ----
 // Two protomaps-leaflet layers, each in its own pane below the trail maps (250) and clear of
 // Leaflet's tilePane (200). The detail layer is constrained with bounds + minZoom so it ONLY
-// creates tiles inside its region and above z6 — otherwise it paints empty opaque tiles that
-// flash and cover the world layer when zoomed out. maxDataZoom lets a layer overzoom its max.
+// creates tiles inside its region; otherwise it paints empty opaque tiles that flash and cover
+// the world layer. minZoom is 7 (= source-min 6 + the renderer's levelDiff of 1): at its first
+// zoom the layer fetches data one level coarser, so starting at z6 would request z5 (below the
+// source's z6 floor) and draw a blank tile — the gray band at the boundary. maxDataZoom lets a
+// layer overzoom past its deepest tiles. The world layer (z0-5) shows below z7 and outside the bbox.
 const WEST_BOUNDS = L.latLngBounds([[38, -125], [49.5, -109]]); // westus.pmtiles extent
 const BG_TIERS = [
   { url: "world.pmtiles", pane: "bg-world", zIndex: 240, opts: { maxDataZoom: 5 } },
-  { url: "westus.pmtiles", pane: "bg-west", zIndex: 245, opts: { maxDataZoom: 10, minZoom: 6, bounds: WEST_BOUNDS } },
+  { url: "westus.pmtiles", pane: "bg-west", zIndex: 245, opts: { maxDataZoom: 10, minZoom: 7, bounds: WEST_BOUNDS } },
 ];
 for (const t of BG_TIERS) {
   map.createPane(t.pane);
