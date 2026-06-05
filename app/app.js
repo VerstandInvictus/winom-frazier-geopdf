@@ -66,7 +66,7 @@ if (navigator.storage && navigator.storage.persist) {
 })();
 
 // ---- Map core: 2016 raster (rotated overlay) + 2025 vector (SVG), toggle ----
-const map = L.map("map", { zoomControl: true });
+const map = L.map("map", { zoomControl: true, minZoom: 4 }); // floor ~CONUS scale
 // Base maps go in a dedicated pane BELOW the default overlayPane, so the GPX track
 // and GPS dot (in overlayPane) always render on top and never get hidden by a map swap.
 map.createPane("basemaps");
