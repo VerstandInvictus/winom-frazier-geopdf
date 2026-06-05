@@ -98,27 +98,11 @@ const BG_TIERS = [
   { url: "world.pmtiles", pane: "bg-world", zIndex: 240, opts: { maxDataZoom: 5 } },
   { url: "westus.pmtiles", pane: "bg-west", zIndex: 245, opts: { maxDataZoom: 10, minZoom: 7, bounds: WEST_BOUNDS } },
 ];
-// The light flavor draws road *names* (z12+) but no shields. Add a ShieldSymbolizer rule on top of
-// the flavor's resolved label rules so numbered highways get a shield (the roads layer carries
-// `shield_text`/`ref`). Zero extra data -- it's already in the tiles.
-function highwayShieldRule() {
-  return {
-    dataLayer: "roads",
-    minzoom: 9,
-    symbolizer: new protomapsL.ShieldSymbolizer({
-      font: "600 11px sans-serif", fill: "#1a1a1a", background: "#ffffff", padding: 4,
-      text: (z, f) => f.props.shield_text || f.props.ref,
-    }),
-    filter: (z, f) => (f.props.kind === "highway" || f.props.kind === "major_road") && (f.props.shield_text || f.props.ref),
-  };
-}
 for (const t of BG_TIERS) {
   map.createPane(t.pane);
   map.getPane(t.pane).style.zIndex = t.zIndex;
   try {
-    const layer = protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "light", lang: "en", pane: t.pane }, t.opts));
-    if (layer.labelRules) layer.labelRules.push(highwayShieldRule());
-    layer.addTo(map);
+    protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "light", lang: "en", pane: t.pane }, t.opts)).addTo(map);
   } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
 let layer2016 = null, layer2025 = null, layerDes = null, layerHep = null, activeWinom = null;
