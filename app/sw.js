@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v21";
+const CACHE_VERSION = "wf-v22";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
@@ -12,13 +12,23 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache:"reload" forces each precache fetch to the network, bypassing the browser HTTP cache
+  // (GitHub Pages' max-age=600) -- otherwise a new version would re-cache stale files.
+  e.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+// Report the running cache version to the page (so it can show which build is live).
+self.addEventListener("message", (e) => {
+  if (e.data === "version" && e.source) e.source.postMessage({ version: CACHE_VERSION });
 });
 // Serve byte-range requests for the .pmtiles archive from the cached full file (offline).
 const _pmBufs = {};

@@ -1,6 +1,27 @@
-// ---- PWA bootstrap: service worker, persistent storage, install hint ----
+// ---- PWA bootstrap: service worker (reliable updates), persistent storage, install hint ----
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js").catch((e) => console.warn("SW register failed", e));
+  // If a controller already exists, reload once when a NEW worker takes over so updates land
+  // immediately. (Guarded; skipped on the very first install where there's no controller yet.)
+  if (navigator.serviceWorker.controller) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  }
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.version) {
+      const el = document.getElementById("ver");
+      if (el) el.textContent = e.data.version;
+    }
+  });
+  // updateViaCache:"none" -> sw.js is always checked against the network, never the HTTP cache.
+  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then((reg) => {
+    reg.update(); // explicitly check for a newer worker on every launch
+    const sw = reg.active || reg.waiting;
+    if (sw) sw.postMessage("version");
+  }).catch((e) => console.warn("SW register failed", e));
 }
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((granted) => console.log("persistent storage:", granted));
