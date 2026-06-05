@@ -26,20 +26,22 @@ map.createPane("basemaps");
 map.getPane("basemaps").style.zIndex = 250;
 const status = document.getElementById("status");
 
-// ---- Offline vector basemap: global base + western-US detail, both overzoomed ----
-// Only two layers (stacking many protomaps-leaflet layers made them paint over each other =
-// gray/flicker). Panes 240/245 sit below the trail maps (250) and clear of Leaflet's default
-// tilePane (200). maxDataZoom lets a layer overzoom past its deepest tiles instead of going gray.
+// ---- Offline vector basemap: global base + western-US detail ----
+// Two protomaps-leaflet layers, each in its own pane below the trail maps (250) and clear of
+// Leaflet's tilePane (200). The detail layer is constrained with bounds + minZoom so it ONLY
+// creates tiles inside its region and above z6 — otherwise it paints empty opaque tiles that
+// flash and cover the world layer when zoomed out. maxDataZoom lets a layer overzoom its max.
+const WEST_BOUNDS = L.latLngBounds([[38, -125], [49.5, -109]]); // westus.pmtiles extent
 const BG_TIERS = [
-  ["bg-world", "world.pmtiles", 240, 5],   // global context, data z0-5
-  ["bg-west", "westus.pmtiles", 245, 10],  // western US detail, data z6-10
+  { url: "world.pmtiles", pane: "bg-world", zIndex: 240, opts: { maxDataZoom: 5 } },
+  { url: "westus.pmtiles", pane: "bg-west", zIndex: 245, opts: { maxDataZoom: 10, minZoom: 6, bounds: WEST_BOUNDS } },
 ];
-for (const [pane, url, z, maxDataZoom] of BG_TIERS) {
-  map.createPane(pane);
-  map.getPane(pane).style.zIndex = z;
+for (const t of BG_TIERS) {
+  map.createPane(t.pane);
+  map.getPane(t.pane).style.zIndex = t.zIndex;
   try {
-    protomapsL.leafletLayer({ url, flavor: "grayscale", lang: "en", pane, maxDataZoom }).addTo(map);
-  } catch (e) { console.warn("basemap layer failed:", url, e); }
+    protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "grayscale", lang: "en", pane: t.pane }, t.opts)).addTo(map);
+  } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
 let layer2016 = null, layer2025 = null, active = null, bounds2016 = null, bounds2025 = null;
 
