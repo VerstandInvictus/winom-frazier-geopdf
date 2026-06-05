@@ -116,7 +116,6 @@ Promise.all([
 
 document.getElementById("m2016").addEventListener("click", () => showWinom("2016"));
 document.getElementById("m2025").addEventListener("click", () => showWinom("2025"));
-document.getElementById("mdes").addEventListener("click", () => map.fitBounds(boundsDes));
 
 // ---- Live GPS: blue dot + accuracy ring + recenter ----
 let gpsDot = null, gpsRing = null, lastFix = null;
