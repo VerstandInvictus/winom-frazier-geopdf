@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v18";
+const CACHE_VERSION = "wf-v19";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./world.pmtiles", "./westus.pmtiles",
   "./map2016.webp", "./overlay2016.json", "./page2.svg", "./page2_overlay.json",
   "./desolation.webp", "./desolation_overlay.json",
+  "./heppner.webp", "./heppner_overlay.json",
 ];
 
 self.addEventListener("install", (e) => {

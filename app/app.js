@@ -55,6 +55,8 @@ map.getPane("basemaps").style.zIndex = 250;
 // sheets' edges graze each other (still below the GPX/GPS panes).
 map.createPane("desolation");
 map.getPane("desolation").style.zIndex = 255;
+map.createPane("heppner");
+map.getPane("heppner").style.zIndex = 256;
 const status = document.getElementById("status");
 
 // ---- Offline vector basemap: global base + western-US detail ----
@@ -77,7 +79,7 @@ for (const t of BG_TIERS) {
     protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "grayscale", lang: "en", pane: t.pane }, t.opts)).addTo(map);
   } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
-let layer2016 = null, layer2025 = null, layerDes = null, activeWinom = null;
+let layer2016 = null, layer2025 = null, layerDes = null, layerHep = null, activeWinom = null;
 let bounds2016 = null, bounds2025 = null, boundsDes = null;
 
 // 2016 and 2025 cover the same Winom-Frazier area -> mutually exclusive toggle. Desolation is
@@ -96,7 +98,8 @@ Promise.all([
   fetch("page2_overlay.json").then((r) => r.json()),
   fetch("page2.svg").then((r) => r.text()),
   fetch("desolation_overlay.json").then((r) => r.json()),
-]).then(([o16, o25, svg25, oDes]) => {
+  fetch("heppner_overlay.json").then((r) => r.json()),
+]).then(([o16, o25, svg25, oDes, oHep]) => {
   const tl = L.latLng(o16.topleft), tr = L.latLng(o16.topright), bl = L.latLng(o16.bottomleft);
   const br = L.latLng(tr.lat + bl.lat - tl.lat, tr.lng + bl.lng - tl.lng);
   layer2016 = L.imageOverlay.rotated("map2016.webp", tl, tr, bl, { opacity: 1, interactive: false, pane: "basemaps" });
@@ -110,6 +113,10 @@ Promise.all([
   layerDes = L.imageOverlay.rotated("desolation.webp", dtl, dtr, dbl, { opacity: 1, interactive: false, pane: "desolation" });
   boundsDes = L.latLngBounds([dtl, dtr, dbl, dbr]);
   layerDes.addTo(map); // Desolation is a separate area -> always shown
+  // Heppner: another geocoded area ~80 km west, also a rotated raster, also always shown.
+  const htl = L.latLng(oHep.topleft), htr = L.latLng(oHep.topright), hbl = L.latLng(oHep.bottomleft);
+  layerHep = L.imageOverlay.rotated("heppner.webp", htl, htr, hbl, { opacity: 1, interactive: false, pane: "heppner" });
+  layerHep.addTo(map);
   showWinom("2016");
   status.textContent = "Map loaded.";
 }).catch((e) => { status.textContent = "Map load error: " + e.message; });
