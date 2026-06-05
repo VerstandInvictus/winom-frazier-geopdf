@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v23";
+const CACHE_VERSION = "wf-v24";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",

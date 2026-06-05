@@ -1,6 +1,6 @@
 {
-  "name": "Winom-Frazier OHV Field Map",
-  "short_name": "WF Trail Map",
+  "name": "Winom Trails",
+  "short_name": "Winom Trails",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
