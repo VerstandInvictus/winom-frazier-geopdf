@@ -20,7 +20,12 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
     .then((reg) => reg.update()) // explicitly check for a newer worker on every launch
     .catch((e) => console.warn("SW register failed", e));
-  navigator.serviceWorker.ready.then((reg) => { if (reg.active) reg.active.postMessage("version"); });
+  navigator.serviceWorker.ready.then((reg) => {
+    if (reg.active) reg.active.postMessage("version");
+    // After the first render, ask the worker to cache the big maps for offline (deferred so it
+    // doesn't compete with the initial basemap download).
+    setTimeout(() => { if (reg.active) reg.active.postMessage("precache-maps"); }, 8000);
+  });
 }
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((granted) => console.log("persistent storage:", granted));

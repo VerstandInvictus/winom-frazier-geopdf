@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v31";
+const CACHE_VERSION = "wf-v32";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -12,19 +12,17 @@ const ASSETS = [
   "./heppner.webp", "./heppner_overlay.json",
 ];
 
-// Small code/config is revalidated (cache:"no-cache") so updates are always fresh. Big maps use
-// the default cache: when unchanged they come from the browser HTTP cache (fast, no 40 MB
-// re-download that would saturate the connection and break in-flight basemap fetches on update).
-const DATA = ["./world.pmtiles", "./westus.pmtiles", "./map2016.webp", "./page2.svg", "./desolation.webp", "./heppner.webp"];
-const CODE = ASSETS.filter((u) => !DATA.includes(u));
+// The big maps are NOT precached in install(): the .pmtiles are fetched-in-full and cached by the
+// range handler on first use; the trail maps cache on first fetch + via the "precache-maps" message.
+const DEFER = ["./world.pmtiles", "./westus.pmtiles", "./map2016.webp", "./page2.svg", "./desolation.webp", "./heppner.webp"];
+const PRECACHE = ASSETS.filter((u) => !DEFER.includes(u));
 
 self.addEventListener("install", (e) => {
-  e.waitUntil((async () => {
-    const c = await caches.open(CACHE_VERSION);
-    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" })));
-    await c.addAll(DATA);
-    await self.skipWaiting();
-  })());
+  e.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then((c) => c.addAll(PRECACHE.map((u) => new Request(u, { cache: "no-cache" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil(
@@ -32,27 +30,55 @@ self.addEventListener("activate", (e) => {
       .then(() => self.clients.claim())
   );
 });
-// Report the running cache version to the page (so it can show which build is live).
+
+// GitHub Pages serves .pmtiles gzip-encoded, so a byte-range request to Pages returns a range of the
+// GZIPPED stream tagged Content-Encoding: gzip -- the browser can't decode a partial gzip
+// (ERR_CONTENT_DECODING_FAILED) and the offsets are wrong anyway. So NEVER range-request Pages:
+// fetch the whole file once (the browser decodes gzip), cache the raw bytes, and slice ranges from
+// that decoded copy. _pmFull dedupes concurrent callers to a single download.
+const _pmFull = {};
+function pmtilesFull(href) {
+  if (!_pmFull[href]) {
+    _pmFull[href] = (async () => {
+      const c = await caches.open(CACHE_VERSION);
+      const hit = await c.match(href);
+      if (hit) return hit.arrayBuffer();
+      const res = await fetch(new Request(href, { cache: "no-store" })); // fresh; browser decodes gzip
+      const buf = await res.arrayBuffer();
+      try { await c.put(href, new Response(buf, { headers: { "Content-Type": "application/octet-stream" } })); } catch (err) {}
+      return buf;
+    })().catch((err) => { delete _pmFull[href]; throw err; });
+  }
+  return _pmFull[href];
+}
+function cacheMapsForOffline() {
+  return Promise.all(DEFER.map(async (u) => {
+    const href = new URL(u, self.registration.scope).href;
+    try {
+      if (href.endsWith(".pmtiles")) { await pmtilesFull(href); return; }
+      const c = await caches.open(CACHE_VERSION);
+      if (!(await c.match(u))) await c.add(new Request(u, { cache: "no-cache" }));
+    } catch (err) { /* retry next load */ }
+  }));
+}
 self.addEventListener("message", (e) => {
   if (e.data === "version" && e.source) e.source.postMessage({ version: CACHE_VERSION });
+  if (e.data === "precache-maps") e.waitUntil(cacheMapsForOffline());
 });
-// .pmtiles byte-range reads: if the file is cached, slice from an in-memory copy (offline). If it
-// is not cached yet (mid-install), pass the range request straight to the network -- GitHub Pages
-// serves ranges natively, and pulling the whole file here would duplicate the install download.
-const _pmBufs = {};
+
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
-  const range = e.request.headers.get("range");
-  if (url.pathname.endsWith(".pmtiles") && range) {
+  if (url.pathname.endsWith(".pmtiles")) {
     e.respondWith((async () => {
-      if (!_pmBufs[url.href]) {
-        _pmBufs[url.href] = caches.open(CACHE_VERSION)
-          .then((c) => c.match(url.href))
-          .then((hit) => (hit ? hit.arrayBuffer() : null));
+      const buf = await pmtilesFull(url.href); // decoded full file, from cache or one download
+      const range = e.request.headers.get("range");
+      if (!range) {
+        return new Response(buf, {
+          status: 200,
+          headers: { "Content-Length": String(buf.byteLength), "Accept-Ranges": "bytes", "Content-Type": "application/octet-stream" },
+        });
       }
-      const buf = await _pmBufs[url.href].catch(() => null);
-      if (!buf) { delete _pmBufs[url.href]; return fetch(e.request); } // not cached yet -> network range
       const m = /bytes=(\d+)-(\d*)/.exec(range);
       const start = +m[1];
       const end = m[2] ? +m[2] : buf.byteLength - 1;
