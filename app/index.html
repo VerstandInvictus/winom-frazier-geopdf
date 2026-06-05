@@ -17,6 +17,7 @@
     #install-hint { position: absolute; bottom: 12px; left: 8px; right: 8px; z-index: 1001;
       background: #2e6b2e; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
     #install-hint button { margin-left: 8px; }
+    #install-btn { background: #fff; color: #2e6b2e; font-weight: bold; padding: 6px 12px; }
     button { font-size: 14px; padding: 4px 8px; }
     button.on { background: #2e6b2e; color: #fff; }
     #pdfs a { margin: 0 5px; font-size: 13px; }
@@ -73,8 +74,9 @@
     </div>
   </div>
   <div id="install-hint" hidden>
-    For offline GPS, add this to your Home Screen (Share → Add to Home Screen), then open it from there.
-    <button type="button">Got it</button>
+    <span id="install-ios" hidden>To install for offline use: tap <b>Share</b> → <b>Add to Home Screen</b>, then open it from that icon.</span>
+    <button id="install-btn" type="button" hidden>⤓ Install app</button>
+    <button id="install-dismiss" type="button">Got it</button>
   </div>
   <div id="map"></div>
   <script src="vendor/leaflet.js"></script>

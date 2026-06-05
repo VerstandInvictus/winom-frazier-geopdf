@@ -5,17 +5,41 @@ if ("serviceWorker" in navigator) {
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((granted) => console.log("persistent storage:", granted));
 }
-// One-time "Add to Home Screen" hint (hidden once dismissed or if already installed).
-(function installHint() {
+// Install: a real "Install app" button on Android/Chrome (fires the WebAPK install, not a
+// bookmark shortcut) via beforeinstallprompt; iOS Safari has no such API, so it falls back to
+// the Share -> Add to Home Screen instruction.
+(function install() {
   const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-  if (standalone || localStorage.getItem("wf-hint-dismissed")) return;
-  const el = document.getElementById("install-hint");
-  if (!el) return;
-  el.hidden = false;
-  el.querySelector("button").addEventListener("click", () => {
-    el.hidden = true;
+  const hint = document.getElementById("install-hint");
+  if (!hint || standalone || localStorage.getItem("wf-hint-dismissed")) return;
+  const btn = document.getElementById("install-btn");
+  const iosText = document.getElementById("install-ios");
+  let deferred = null;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();          // keep Chrome from auto-showing its mini-infobar
+    deferred = e;
+    iosText.hidden = true;
+    btn.hidden = false;
+    hint.hidden = false;
+  });
+  btn.addEventListener("click", async () => {
+    if (!deferred) return;
+    deferred.prompt();           // the real install dialog (WebAPK)
+    await deferred.userChoice;
+    deferred = null;
+    hint.hidden = true;
+  });
+  window.addEventListener("appinstalled", () => { hint.hidden = true; });
+  document.getElementById("install-dismiss").addEventListener("click", () => {
+    hint.hidden = true;
     localStorage.setItem("wf-hint-dismissed", "1");
   });
+
+  // iOS Safari: no beforeinstallprompt -> show the Add-to-Home-Screen instruction.
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) { iosText.hidden = false; btn.hidden = true; hint.hidden = false; }
 })();
 
 // ---- Map core: 2016 raster (rotated overlay) + 2025 vector (SVG), toggle ----
