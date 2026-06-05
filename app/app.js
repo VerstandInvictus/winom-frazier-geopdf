@@ -96,7 +96,7 @@ for (const t of BG_TIERS) {
   map.createPane(t.pane);
   map.getPane(t.pane).style.zIndex = t.zIndex;
   try {
-    protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "grayscale", lang: "en", pane: t.pane }, t.opts)).addTo(map);
+    protomapsL.leafletLayer(Object.assign({ url: t.url, flavor: "light", lang: "en", pane: t.pane }, t.opts)).addTo(map);
   } catch (e) { console.warn("basemap layer failed:", t.url, e); }
 }
 let layer2016 = null, layer2025 = null, layerDes = null, layerHep = null, activeWinom = null;
