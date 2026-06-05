@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever the ASSETS list changes (forces clients to re-cache).
-const CACHE_VERSION = "wf-v27";
+const CACHE_VERSION = "wf-v28";
 const ASSETS = [
   "./", "./index.html", "./app.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-512-maskable.png",
@@ -12,15 +12,19 @@ const ASSETS = [
   "./heppner.webp", "./heppner_overlay.json",
 ];
 
+// Big maps: default cache (served from the HTTP cache when unchanged -> fast, no 40 MB
+// re-download that would saturate the connection and break in-flight basemap fetches).
+// Everything else is small and revalidated (cache:"no-cache") so updates are always fresh.
+const DATA = ["./world.pmtiles", "./westus.pmtiles", "./map2016.webp", "./page2.svg", "./desolation.webp", "./heppner.webp"];
+const CODE = ASSETS.filter((u) => !DATA.includes(u));
+
 self.addEventListener("install", (e) => {
-  // cache:"no-cache" revalidates each precache fetch with the server (ETag), so a new version
-  // never re-stores a stale file from the browser HTTP cache (GitHub Pages' max-age=600).
-  // Unchanged big maps return 304 (no re-download) -- only changed files re-fetch.
-  e.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: "no-cache" }))))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE_VERSION);
+    await c.addAll(CODE.map((u) => new Request(u, { cache: "no-cache" })));
+    await c.addAll(DATA);
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil(
@@ -32,29 +36,24 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("message", (e) => {
   if (e.data === "version" && e.source) e.source.postMessage({ version: CACHE_VERSION });
 });
-// Serve byte-range requests for the .pmtiles archive from the cached full file (offline).
+// .pmtiles byte-range reads: if the file is cached, slice from an in-memory copy (offline). If
+// it is not cached yet (mid-install), pass the range request straight to the network -- GitHub
+// Pages serves ranges natively, and pulling the whole file here would duplicate the install's
+// download (the browser cancels one -> "Failed to fetch").
 const _pmBufs = {};
-function pmtilesBuffer(href) {
-  // Cache the PROMISE (not the resolved buffer) so concurrent range requests for the same
-  // .pmtiles share ONE fetch. Otherwise, before the file is cached (e.g. during install), each
-  // tile triggers a full re-download and the racing duplicates fail ("Failed to fetch").
-  if (!_pmBufs[href]) {
-    _pmBufs[href] = (async () => {
-      const cache = await caches.open(CACHE_VERSION);
-      let res = await cache.match(href);
-      if (!res) { res = await fetch(href); try { await cache.put(href, res.clone()); } catch (e) {} }
-      return res.arrayBuffer();
-    })().catch((e) => { delete _pmBufs[href]; throw e; }); // clear on failure -> allow retry
-  }
-  return _pmBufs[href];
-}
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   const range = e.request.headers.get("range");
   if (url.pathname.endsWith(".pmtiles") && range) {
     e.respondWith((async () => {
-      const buf = await pmtilesBuffer(url.href);
+      if (!_pmBufs[url.href]) {
+        _pmBufs[url.href] = caches.open(CACHE_VERSION)
+          .then((c) => c.match(url.href))
+          .then((hit) => (hit ? hit.arrayBuffer() : null));
+      }
+      const buf = await _pmBufs[url.href].catch(() => null);
+      if (!buf) { delete _pmBufs[url.href]; return fetch(e.request); } // not cached yet -> network range
       const m = /bytes=(\d+)-(\d*)/.exec(range);
       const start = +m[1];
       const end = m[2] ? +m[2] : buf.byteLength - 1;
