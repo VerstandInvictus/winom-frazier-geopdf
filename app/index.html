@@ -21,6 +21,7 @@
     #install-hint button { margin-left: 8px; }
     #install-btn { background: #fff; color: #2e6b2e; font-weight: bold; padding: 6px 12px; }
     #shareicon { vertical-align: -3px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    #dotsicon { vertical-align: -3px; fill: #fff; }
     #install-arrow { position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%);
       width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 13px solid #2e6b2e; }
     button { font-size: 14px; padding: 4px 8px; }
@@ -84,7 +85,7 @@
   </div>
   <div id="install-hint" hidden>
     <span id="install-msg">For offline maps, make sure this page got installed on your Home Screen and launch it from there.</span>
-    <span id="install-ios" hidden> Tap <svg id="shareicon" viewBox="0 0 24 24" width="15" height="15"><path d="M12 3v11M12 3l-4 4M12 3l4 4"/><path d="M6 10H4v10h16V10h-2"/></svg> <b>Share</b> below → <b>View More</b> → <b>Add to Home Screen</b>.</span>
+    <span id="install-ios" hidden> Tap <b>Share</b> <svg id="shareicon" viewBox="0 0 24 24" width="15" height="15"><path d="M12 3v11M12 3l-4 4M12 3l4 4"/><path d="M6 10H4v10h16V10h-2"/></svg> (may be under <svg id="dotsicon" viewBox="0 0 24 24" width="15" height="15"><circle cx="5" cy="12" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="19" cy="12" r="2.1"/></svg>) → <b>Add to Home Screen</b> (may be under <b>View More</b>).</span>
     <button id="install-btn" type="button" hidden>⤓ Install app</button>
     <button id="install-dismiss" type="button">Got it</button>
     <div id="install-arrow" hidden></div>
